@@ -54,6 +54,7 @@
 
 .text {
     margin-left: 1em;
+    color: aliceblue;
 }
 
 .commandsGrid {
@@ -85,4 +86,9 @@
 .commandText {
     margin-left: 1em;
     margin-right: 1em;
+}
+.login-container {
+    display: flexbox;
+    align-self: center;
+    align-items: center;
 }
