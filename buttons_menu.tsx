@@ -1,39 +1,24 @@
 import React, { Context, Dispatch, ReactElement, createContext, useContext, useEffect, useState } from "react"
 import { View, StyleSheet, Text, ViewStyle, } from "react-native";
-import "./app.module.css"
 import axios, { AxiosInstance } from 'axios';
 import { createPortal } from 'react-dom';
 import { Navigate } from "react-router-dom";
-import Form from "react-jsonschema-form"
+import Form, { FormProps } from "react-jsonschema-form"
 
 const apiAuthenticatedContext: Context<[boolean, Dispatch<boolean>]> = createContext(null)
-
-
-export enum ArgumentType {
-    Number = "Number",
-    String = "String",
-    Boolean = "Boolean"
-}
-
-
-export enum CommandType {
-    Browse = 'Browse',
-    StartServer = 'Start Server',
-    RunCommand = 'RunCommand',
-    Stop = 'Stop',
-    Delete = 'Delete',
-}
+const serverIdContext: Context<string> = createContext('')
+const serverCommandsContext: Context<CommandInfo[]> = createContext([])
 
 export class CommandInfo {
     name: string
-    server_id: string
-    command_type: CommandType
+    requestType: 'post' | 'get' | 'delete'
+    endpoint: string
     args: {}
-    constructor(server_id: string, name: string, args: {} | null, command_type: CommandType) {
-        this.server_id = server_id
+    constructor(name: string, args: {} | null, requestType: 'post' | 'get' | 'delete', endpoint: string) {
         this.name = name
         this.args = args
-        this.command_type = command_type
+        this.requestType = requestType
+        this.endpoint = endpoint
     }
 }
 
@@ -45,56 +30,28 @@ function StatusRow(props: { text: string, on: boolean }) {
     </div>)
 }
 
-function FormTest(p: { command: CommandInfo, onCancel: () => void }) {
-    const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
-    function handleSubmit() {
-        switch (p.command.command_type) {
-            case CommandType.StartServer: {
-                api.post(`/servers/${p.command.server_id}/start`, args)
-                break
-            }
-            case CommandType.Stop: {
-                api.post(`/servers/${p.command.server_id}/stop`, args)
-                break
-            }
-            case CommandType.Delete: {
-                api.delete(`/servers/${p.command.server_id}`, args)
-                break
-            }
-        }
-        setArgs({})
-        p.onCancel()
-    }
 
-    if (Object.entries(p.command.args).length == 0) {
-        handleSubmit()
-    }
-
-    return <div className='form-background' onClick={p.onCancel}>
-        <div className='form' onClick={(e) => { e.stopPropagation() }}>
-            <button onClick={handleSubmit}>Submit</button>
-        </div>
-    </div>
-}
-
-
-function Command(props: { command: CommandInfo }) {
-    let [form, setForm] = useState(false);
-    let [formData, setFormData] = useState(null)
+function Command(p: { command: CommandInfo }) {
+    const server_id: string = useContext(serverIdContext)
+    const [form, setForm] = useState(false);
+    const [formData, setFormData] = useState(null)
 
     const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
+
+
     function handleSubmit() {
-        switch (props.command.command_type) {
-            case CommandType.StartServer: {
-                api.post(`/servers/${props.command.server_id}/start`, args)
+        let url = `servers/${server_id}/${p.command.endpoint}`
+        switch (p.command.requestType) {
+            case 'post': {
+                api.post(url, formData)
                 break
             }
-            case CommandType.Stop: {
-                api.post(`/servers/${props.command.server_id}/stop`, args)
+            case 'get': {
+                api.post(url, formData)
                 break
             }
-            case CommandType.Delete: {
-                api.delete(`/servers/${props.command.server_id}`, args)
+            case 'delete': {
+                api.delete(url, formData)
                 break
             }
         }
@@ -103,20 +60,21 @@ function Command(props: { command: CommandInfo }) {
         setFormData(null)
     }
 
-    function onFormChange(args: Record<string, any>) {
+    function onFormChange(args: FormProps) {
         setFormData(args.formData)
     }
-    let yourForm;
-
+    if (form && Object.entries(p.command.args.properties).length == 0) {
+        handleSubmit()
+    }
     return (<>
         <button className="command" onClick={() => { setForm(true) }}>
-        <a className="commandText"> {props.command.name}</a>
+            <a className="commandText"> {p.command.name}</a>
         </button >
         {
             form && createPortal(
-                <div className='form-background'>
+                <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
                     <div className='form' onClick={(e) => { e.stopPropagation() }}>
-                        {<Form schema={props.command.args} onChange={onFormChange} formData={formData} />}
+                        <Form schema={p.command.args} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
                     </div>
                 </div>, document.getElementById('container'))
         }
@@ -124,14 +82,17 @@ function Command(props: { command: CommandInfo }) {
 }
 
 
-function ServerItem(props: { name: string, on: boolean, id: string, commands }) {
+function ServerItem(props: { name: string, on: boolean, id: string }) {
+    const commands = useContext(serverCommandsContext)
     return (
-        <div className="server" id={props.id} key={props.id}>
-            <StatusRow on={props.on} text={props.name} />
-            <div className="commandsGrid">
-                {props.commands}
+        <serverIdContext.Provider value={props.id}>
+            <div className="server" id={props.id} key={props.id}>
+                <StatusRow on={props.on} text={props.name} />
+                <div className="commandsGrid">
+                    {commands.map((command, index, array) => { return <Command command={command} /> })}
+                </div>
             </div>
-        </div>
+        </serverIdContext.Provider>
     )
 }
 
@@ -184,8 +145,48 @@ export function ApiWrapper({ children }) {
     return (<apiAuthenticatedContext.Provider value={[apiAuthenticated, setApiAuthenticated]}>
         {children}
     </apiAuthenticatedContext.Provider>)
+
+    function omit(key, obj) {
+        const { [key]: omitted, ...rest } = obj;
+        return rest;
+    }
+}
+function omit(key, obj) {
+    const { [key]: omitted, ...rest } = obj;
+    return rest;
 }
 
+function loadCommands(api: AxiosInstance): CommandInfo[] {
+    const [commands, setCommands] = useState([])
+    if (commands.length > 0) {
+        console.log(commands)
+
+        return commands
+    }
+
+    api.get('/openapi.json').then(
+        (value) => {
+            let responseCommands = []
+            let paths: Record<string, any> = value.data.paths
+            for (let [path, request] of Object.entries(paths)) {
+                if (path.startsWith('/servers/{server_id}')) {
+                    console.log(request)
+                    for (let [method, schema] of Object.entries(request)) {
+                        let formSchema = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: value.data.components, default: {} }
+                        console.log(formSchema)
+                        if (schema.requestBody) {
+                            formSchema = schema.requestBody.content['application/json'].schema
+                            formSchema.definitions = value.data.components
+                        }
+                        responseCommands.push(new CommandInfo(schema.summary, JSON.parse(JSON.stringify(formSchema).replaceAll('#/components', '#/definitions')), method, path.slice('/servers/{server_id}/'.length)))
+                    }
+                }
+            }
+            setCommands(responseCommands)
+        }
+    )
+    return commands
+}
 
 export default function ServersBoard({ onFail }) {
     const [servers, setServers] = useState([]);
@@ -228,48 +229,15 @@ export default function ServersBoard({ onFail }) {
     servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 })
     return (
         <div className="grid">
-            {
-                servers.map(
-                    (value: ServerInfo, index: number, array) => {
-                        let commands = [!value.on ? new CommandInfo(value.id_, 'Start', {
-                            "anyOf": [
-                                {
-                                    "type": "object",
-                                    "additionalProperties": {
-                                        "properties": {
-                                            "number": {
-                                                "type": "integer",
-                                                "exclusiveMaximum": 65535,
-                                                "exclusiveMinimum": 1,
-                                                "title": "Number"
-                                            },
-                                            "protocol": {
-                                                "type": "string",
-                                                "enum": [
-                                                    "tcp",
-                                                    "udp"
-                                                ],
-                                                "title": "PortProtocol"
-                                            }
-                                        },
-                                        "type": "object",
-                                        "required": [
-                                            "number",
-                                            "protocol"
-                                        ],
-                                        "title": "Port"
-                                    }
-                                },
-                                {
-                                    "type": "null"
-                                }
-                            ],
-                            "title": "Ports"
-                        }, CommandType.StartServer) : new CommandInfo(value.id_, 'Stop', {}, CommandType.Stop)]
-                        return <ServerItem name={value.user_id + '`s ' + value.image.name + ' ' + value.image.version + ' Server'} on={value.on} id={value.id_} commands={commands.map((command, i, array) => { return <Command command={command} /> })} />
-                    }
-                )
-            }
+            <serverCommandsContext.Provider value={loadCommands(api)}>
+                {
+                    servers.map(
+                        (value: ServerInfo, index: number, array) => {
+                            return <ServerItem name={value.user_id + '`s ' + value.image.name + ' ' + value.image.version + ' Server'} on={value.on} id={value.id_} />
+                        }
+                    )
+                }
+            </serverCommandsContext.Provider>
         </div>
     );
 }
