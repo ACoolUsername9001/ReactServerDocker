@@ -34,7 +34,7 @@ function StatusRow(props: { text: string, on: boolean }) {
 function Command(p: { command: CommandInfo }) {
     const server_id: string = useContext(serverIdContext)
     const [form, setForm] = useState(false);
-    const [formData, setFormData] = useState(null)
+    const [formData, setFormData] = useState({})
 
     const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
 
@@ -63,7 +63,7 @@ function Command(p: { command: CommandInfo }) {
     function onFormChange(args: FormProps) {
         setFormData(args.formData)
     }
-    if (form && Object.entries(p.command.args.properties).length == 0) {
+    if (form && p.command.args.properties && Object.entries(p.command.args.properties).length == 0) {
         handleSubmit()
     }
     return (<>
