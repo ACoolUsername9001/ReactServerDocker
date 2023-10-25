@@ -16,7 +16,8 @@
 
 .server {
     min-width: fit-content;
-    height: 5em;
+    min-height: 5em;
+    height: fit-content;
     border-color: #232323;
     border-style: solid;
     border-radius: 1vw;
@@ -33,10 +34,13 @@
     min-height: 1em;
     display: inline-flex;
     background-color: #545454;
+    padding-top: 1%;
+    align-content: center;
 }
 
 .statusIcon {
     height: 60%;
+    min-height: 0.7em;
     aspect-ratio: 1/1;
     border-radius: 100%;
     border-width: 1px;
@@ -64,6 +68,8 @@
     align-items: center;
     margin-left: 1em;
     margin-right: 1em;
+    margin-top: 1%;
+    margin-bottom: 0.5%;
     justify-content: left;
     flex-direction: row;
     min-width: max-content;
@@ -73,14 +79,15 @@
 .command {
     display: grid;
     background-color: #545454;
-    height: 80%;
     width: fit-content;
+    min-height: 3em;
     min-width: 3em;
     text-align: center;
     justify-content: center;
     align-content: center;
     margin-left: 1em;
     border-radius: 1em;
+    height:fit-content;
 }
 
 .commandText {
@@ -114,4 +121,64 @@
     justify-content: center;
     background-color: rgba(0, 0, 0, 0.3);
     display: flex;
+}
+
+.menu-bar{
+    display: inline-flex;
+    width: 100%;
+}
+
+.menu-item{
+    background-color: #414141;
+    align-self: center;
+    text-align: center;
+    display: inline-flex;
+    align-self: center;
+    width: 100%;
+    justify-content: center;
+    padding-top: 1%;
+}
+
+.menu-item-selected{
+    background-color: #545454;
+}
+
+.users-table{
+    margin: 5%;
+    background-color: #232323;
+    display: grid;
+    width: 90%;
+    min-width: max-content;
+    min-height: max-content;
+    border-radius: .5em;
+    padding-bottom: .5em;
+}
+
+.users-row{
+    width: 100%;
+    display: inline-flex;
+    font-size: small;
+    padding-top: 1%;
+}
+.users-column{
+    width: 100%;
+    justify-content: center;
+}
+
+.users-headers-row{
+    width: 100%;
+    display: inline-flex;
+    font-size: small;
+    padding-top: 1%;
+}
+
+.users-row:hover{
+    background-color: #414141;
+}
+
+.users-headers{
+    background-color: #393939;
+    font-size: medium;
+    border-top-left-radius: .5em;
+    border-top-right-radius: .5em;
 }

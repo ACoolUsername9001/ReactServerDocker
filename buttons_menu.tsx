@@ -82,14 +82,21 @@ function Command(p: { command: CommandInfo }) {
 }
 
 
-function ServerItem(props: { name: string, on: boolean, id: string }) {
+function ServerItem(props: { server_info: ServerInfo }) {
     const commands = useContext(serverCommandsContext)
+    const name = `${props.server_info.user_id}'s ${props.server_info.image.name} ${props.server_info.image.version} Server`
     return (
-        <serverIdContext.Provider value={props.id}>
-            <div className="server" id={props.id} key={props.id}>
-                <StatusRow on={props.on} text={props.name} />
-                <div className="commandsGrid">
-                    {commands.map((command, index, array) => { return <Command command={command} /> })}
+        <serverIdContext.Provider value={props.server_info.id_}>
+            <div className="server" id={props.server_info.id_} key={props.server_info.id_}>
+                <StatusRow on={props.server_info.on} text={name} />
+                <div>
+                    {props.server_info.on && <div>
+                        <div>domain: {props.server_info.domain}</div>
+                        <div>ports: {props.server_info.ports.map((port, index, array) => { return `${port.number}/${port.protocol}` })}</div>
+                    </div>}
+                    <div className="commandsGrid">
+                        {commands.map((command, index, array) => { return <Command command={command} /> })}
+                    </div>
                 </div>
             </div>
         </serverIdContext.Provider>
@@ -190,7 +197,7 @@ function loadCommands(api: AxiosInstance): CommandInfo[] {
 
 export default function ServersBoard({ onFail }) {
     const [servers, setServers] = useState([]);
-    const [apiAuthenticated, _] = useContext(apiAuthenticatedContext)
+    const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     function handleServers() {
         if (apiAuthenticated) {
             let servers_promised = loadServers(api)
@@ -221,9 +228,12 @@ export default function ServersBoard({ onFail }) {
 
     if (servers == null) {
         setServers([]);
+        setApiAuthenticated(false)
         return onFail()
     }
     if (!apiAuthenticated) {
+        setApiAuthenticated(false)
+
         return onFail();
     }
     servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 })
@@ -233,7 +243,7 @@ export default function ServersBoard({ onFail }) {
                 {
                     servers.map(
                         (value: ServerInfo, index: number, array) => {
-                            return <ServerItem name={value.user_id + '`s ' + value.image.name + ' ' + value.image.version + ' Server'} on={value.on} id={value.id_} />
+                            return <ServerItem server_info={value} />
                         }
                     )
                 }
@@ -278,6 +288,7 @@ export function LoginPage(props: {}) {
     const [username, setUsername] = useState(null)
     const [password, setPassword] = useState(null)
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
+
     if (apiAuthenticated) {
         return <Navigate to='/' />
     }
@@ -314,4 +325,41 @@ export function LoginPage(props: {}) {
             </div>
         </div>
     )
+}
+
+
+interface User{
+    username: string
+    email: string
+    permissions: string[]
+}
+
+export function UsersPage({onFail}){
+    const [apiAuthenticated, _] = useContext(apiAuthenticatedContext)
+    const [users, setUsers]:[User[], Dispatch<User[]>] = useState([])
+    useEffect(()=>{
+        if (!apiAuthenticated){
+            return
+        }
+        api.get('/users').then((response)=>{setUsers(response.data)})
+
+    }, [apiAuthenticated])
+
+    let userComponents = []
+    
+    for(let user of users){
+        userComponents.push(<tr className='users-row'><th className="users-column">{user.username}</th><th  className="users-column">{user.email}</th><th className="users-column">{user.permissions}</th></tr>)
+    }
+    return <div><table className='users-table'>
+        <thead>
+            <tr className="users-headers-row users-headers">
+                <th className="users-column  users-headers">Username</th><th className="users-column users-headers">Email</th><th className="users-column users-headers">Permissions</th>
+            </tr>
+        </thead>
+        {userComponents}
+    </table>
+    <button className='command'>
+        Create User
+    </button>
+    </div>
 }
