@@ -3,7 +3,7 @@ import { View, StyleSheet, Text, ViewStyle, } from "react-native";
 import axios, { AxiosInstance } from 'axios';
 import { createPortal } from 'react-dom';
 import { Navigate } from "react-router-dom";
-import Form, { FormProps } from "react-jsonschema-form"
+import Form from "react-jsonschema-form"
 
 const apiAuthenticatedContext: Context<[boolean, Dispatch<boolean>]> = createContext(null)
 const serverIdContext: Context<string> = createContext('')
@@ -60,7 +60,7 @@ function Command(p: { command: CommandInfo }) {
         setFormData(null)
     }
 
-    function onFormChange(args: FormProps) {
+    function onFormChange(args) {
         setFormData(args.formData)
     }
     if (form && p.command.args.properties && Object.entries(p.command.args.properties).length == 0) {
@@ -103,16 +103,9 @@ function ServerItem(props: { server_info: ServerInfo }) {
     )
 }
 
-
-enum Protocol {
-    TCP = 'tcp',
-    UDP = 'udp'
-}
-
-
 class Port {
     number: number
-    protocol: Protocol
+    protocol: 'tcp' | 'udp'
 }
 
 
@@ -143,7 +136,7 @@ async function loadServers(api: AxiosInstance): Promise<{ status: number, data: 
 }
 
 const api: AxiosInstance = axios.create({
-    baseURL: 'http://127.0.0.1:8000',
+    baseURL: 'https://api.servers.acooldomain.co',
 });
 
 
@@ -228,7 +221,6 @@ export default function ServersBoard({ onFail }) {
     const [images, setImages] = useState([])
     ''.toLocaleUpperCase
     let schema = {
-            
               "properties": {
                 "image_id": {
                   "type": "string",
@@ -298,7 +290,7 @@ export default function ServersBoard({ onFail }) {
         setFormData(null)
     }
 
-    function onFormChange(args: FormProps) {
+    function onFormChange(args) {
         setFormData(args.formData)
     }
 
@@ -435,7 +427,7 @@ export function UsersPage({onFail}){
         setFormData(null)
     }
 
-    function onFormChange(args: FormProps) {
+    function onFormChange(args) {
         setFormData(args.formData)
     }
 
