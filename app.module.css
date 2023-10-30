@@ -1,17 +1,25 @@
 .grid {
     display: grid;
     gap: .3em;
-    padding: 5px 100px;
     margin: 50px 25px;
     max-height: max-content;
 }
 
-.container {
+#root{
+
+    /* width: 100%; */
+    font-family: Arial, Helvetica, sans-serif;
+    color: aliceblue;
+    color-scheme: dark;
     background-color: #343434;
+}
+
+
+.container{
     width: 100%;
     height: 100%;
-    font-family: Arial, Helvetica, sans-serif;
-        color: aliceblue;
+    min-width: fit-content;
+    /* position:absolute; */
 }
 
 .server {
@@ -34,7 +42,7 @@
     min-height: 1em;
     display: inline-flex;
     background-color: #545454;
-    padding-top: 1%;
+    padding-top: .25%;
     align-content: center;
 }
 
@@ -144,14 +152,23 @@
 }
 
 .users-table{
-    margin: 5%;
     background-color: #232323;
-    display: grid;
-    width: 90%;
-    min-width: max-content;
-    min-height: max-content;
+    width: 100%;
+    height: 100%;    
     border-radius: .5em;
     padding-bottom: .5em;
+    display: grid;
+    margin-bottom: .5em;
+    text-align: center;
+}
+
+.users-container{
+    margin: 5%;
+    margin-top: 20%;
+    width: 100%;
+    min-height: max-content;
+    gap: .3em;
+    padding: .01em 5em;
 }
 
 .users-row{

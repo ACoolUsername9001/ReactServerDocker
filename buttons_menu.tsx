@@ -68,7 +68,7 @@ function Command(p: { command: CommandInfo }) {
     }
     return (<>
         <button className="command" onClick={() => { setForm(true) }}>
-            <a className="commandText"> {p.command.name}</a>
+            <span className="commandText"> {p.command.name}</span>
         </button >
         {
             form && createPortal(
@@ -163,6 +163,31 @@ function omit(key, obj) {
     return rest;
 }
 
+
+function loadApiDoc(api: AxiosInstance, path: string, method: string){
+    const [apiRecord, setApiRecord] = useState(null)
+    console.log(apiRecord)
+    if (apiRecord) {        
+        const schema = apiRecord.data.paths[path][method]
+        let formSchema = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: apiRecord.data.components, default: {} }
+        console.log(schema)
+        if (schema.requestBody) {
+            formSchema = schema.requestBody.content['application/json'].schema
+            formSchema.definitions = apiRecord.data.components
+        }
+
+        return JSON.parse(JSON.stringify(formSchema).replaceAll('#/components', '#/definitions'))
+    }
+    
+
+    api.get('/openapi.json').then(
+        (value) => {
+            setApiRecord(value)
+        }
+    )
+
+}
+
 function loadCommands(api: AxiosInstance): CommandInfo[] {
     const [commands, setCommands] = useState([])
     if (commands.length > 0) {
@@ -198,6 +223,30 @@ function loadCommands(api: AxiosInstance): CommandInfo[] {
 export default function ServersBoard({ onFail }) {
     const [servers, setServers] = useState([]);
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
+    const [form, setForm] = useState(false);
+    const [formData, setFormData] = useState({})
+    const [images, setImages] = useState([])
+    ''.toLocaleUpperCase
+    let schema = {
+            
+              "properties": {
+                "image_id": {
+                  "type": "string",
+                  "oneOf": images.map((value, index, array)=>{return {"const": value.id_, "title": `${value.name} ${value.version}`}}),
+                  "title": "Image Id"
+                }
+              },
+              "type": "object",
+              "required": [
+                "image_id"
+              ],
+              "title": "CreateServer"
+            }
+
+      
+    console.log(schema)
+    const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
+
     function handleServers() {
         if (apiAuthenticated) {
             let servers_promised = loadServers(api)
@@ -219,6 +268,9 @@ export default function ServersBoard({ onFail }) {
 
     useEffect(() => {
         handleServers()
+        api.get('/images').then((value)=>{
+            setImages(value.data)
+        }).catch()
         const interval = setInterval(() => {
             handleServers()   
         }, 5000
@@ -236,6 +288,20 @@ export default function ServersBoard({ onFail }) {
 
         return onFail();
     }
+
+    function handleSubmit() {
+        let url = `servers`
+        api.post(url, formData)
+
+        setArgs({})
+        setForm(false)
+        setFormData(null)
+    }
+
+    function onFormChange(args: FormProps) {
+        setFormData(args.formData)
+    }
+
     servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 })
     return (
         <div className="grid">
@@ -247,7 +313,18 @@ export default function ServersBoard({ onFail }) {
                         }
                     )
                 }
+            <button className='command' onClick={()=>{setForm(true)}}>
+                Create Server
+            </button>
             </serverCommandsContext.Provider>
+            {
+            form && createPortal(
+                <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
+                    <div className='form' onClick={(e) => { e.stopPropagation() }}>
+                        <Form schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
+                    </div>
+                </div>, document.getElementById('container'))
+        }
         </div>
     );
 }
@@ -337,12 +414,41 @@ interface User{
 export function UsersPage({onFail}){
     const [apiAuthenticated, _] = useContext(apiAuthenticatedContext)
     const [users, setUsers]:[User[], Dispatch<User[]>] = useState([])
+
+    const [form, setForm] = useState(false);
+    const [formData, setFormData] = useState({})
+
+    const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
+
+    const schema = loadApiDoc(api, '/users', 'post')
+
+    if (!apiAuthenticated){
+        return onFail()
+    }
+
+    function handleSubmit() {
+        let url = `users`
+        api.post(url, formData)
+
+        setArgs({})
+        setForm(false)
+        setFormData(null)
+    }
+
+    function onFormChange(args: FormProps) {
+        setFormData(args.formData)
+    }
+
     useEffect(()=>{
         if (!apiAuthenticated){
             return
         }
         api.get('/users').then((response)=>{setUsers(response.data)})
-
+        const interval = setInterval(() => {
+            api.get('/users').then((response)=>{setUsers(response.data)}) 
+        }, 5000
+        );
+        return () => { clearInterval(interval) }
     }, [apiAuthenticated])
 
     let userComponents = []
@@ -350,7 +456,7 @@ export function UsersPage({onFail}){
     for(let user of users){
         userComponents.push(<tr className='users-row'><th className="users-column">{user.username}</th><th  className="users-column">{user.email}</th><th className="users-column">{user.permissions}</th></tr>)
     }
-    return <div><table className='users-table'>
+    return <div className='users-container'><table className='users-table'>
         <thead>
             <tr className="users-headers-row users-headers">
                 <th className="users-column  users-headers">Username</th><th className="users-column users-headers">Email</th><th className="users-column users-headers">Permissions</th>
@@ -358,8 +464,16 @@ export function UsersPage({onFail}){
         </thead>
         {userComponents}
     </table>
-    <button className='command'>
+    <button className='command' onClick={()=>{setForm(true)}}>
         Create User
     </button>
+    {
+            form && createPortal(
+                <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
+                    <div className='form' onClick={(e) => { e.stopPropagation() }}>
+                        <Form schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
+                    </div>
+                </div>, document.getElementById('container'))
+        }
     </div>
 }

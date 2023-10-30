@@ -3,13 +3,14 @@ import "./app.module.css"
 import React, { useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function Menu({children}){
   const location = useLocation();
   const [path, setPath] = useState('');
   const renavigate = ((path!=location.pathname) && (location.pathname!='/login') && (location.pathname !='/') && (location.pathname != ''))
   console.log(`Pathname ${location.pathname} path ${path} renavigate ${renavigate}`)
-  return <div>
+  return <div className='container' id='container'>
   <div className="menu-bar">
     <div onClick={()=>{setPath('/servers')}} className={`menu-item ${location.pathname == '/servers'? "menu-item-selected": ''}`}> Servers</div>
     <div onClick={()=>{setPath('/users')}} className={`menu-item ${location.pathname == '/users'? "menu-item-selected": ''}`}> Users</div>
@@ -23,8 +24,8 @@ function Menu({children}){
 // Function to obtain the token
 
 export default function App() {
-  return (<div className="container" id='container'>
-    
+  return (
+    // <div className="container" id='container'>
       <ApiWrapper>
         <BrowserRouter>
             <Routes>
@@ -35,7 +36,6 @@ export default function App() {
             </Routes>
         </BrowserRouter>
       </ApiWrapper>
-    
-  </div >
+  // {/* </div> */}
   )
 }
