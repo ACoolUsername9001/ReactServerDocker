@@ -136,7 +136,7 @@ async function loadServers(api: AxiosInstance): Promise<{ status: number, data: 
 }
 
 const api: AxiosInstance = axios.create({
-    baseURL: 'https://api.servers.acooldomain.co',
+    baseURL: 'https://api.games.acooldomain.co',
 });
 
 
