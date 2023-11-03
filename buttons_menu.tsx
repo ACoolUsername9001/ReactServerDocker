@@ -294,12 +294,12 @@ export default function ServersBoard({ onFail }) {
         setFormData(args.formData)
     }
 
-    servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 })
+    
     return (
         <div className="grid">
             <serverCommandsContext.Provider value={loadCommands(api)}>
                 {
-                    servers.map(
+                    servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
                         (value: ServerInfo, index: number, array) => {
                             return <ServerItem server_info={value} />
                         }
@@ -359,7 +359,7 @@ export function LoginPage(props: {}) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
 
     if (apiAuthenticated) {
-        return <Navigate to='/' />
+        return <Navigate to='/servers' />
     }
 
     const handleSubmit = () => {

@@ -29,7 +29,7 @@ export default function App() {
       <ApiWrapper>
         <BrowserRouter>
             <Routes>
-              <Route index element={<Navigate to='/servers' />} />
+              <Route index element={<Navigate to='/login' />} />
               <Route path='/login' element={<LoginPage />} />
               <Route path='/servers' element={<Menu><ServersBoard onFail={() => { return <Navigate to='/login' /> }} /></Menu>} />
               <Route path='/users' element={<Menu><UsersPage onFail={() => { return <Navigate to='/login' /> }} /></Menu>} />
