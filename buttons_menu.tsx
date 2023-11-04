@@ -40,7 +40,10 @@ function Command(p: { command: CommandInfo }) {
 
 
     function handleSubmit() {
-        let url = `servers/${server_id}/${p.command.endpoint}`
+        let url = `servers/${server_id}`
+        if (p.command.endpoint != ""){
+            url = `${url}/${p.command.endpoint}`
+        }
         switch (p.command.requestType) {
             case 'post': {
                 api.post(url, formData)
