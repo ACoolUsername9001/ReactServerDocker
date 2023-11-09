@@ -1,13 +1,17 @@
 import React, { Context, Dispatch, ReactElement, createContext, useContext, useEffect, useState } from "react"
-import { View, StyleSheet, Text, ViewStyle, } from "react-native";
 import axios, { AxiosInstance } from 'axios';
 import { createPortal } from 'react-dom';
 import { Navigate } from "react-router-dom";
 import Form from "react-jsonschema-form"
+import Button from "@mui/material/Button"
+import ButtonGroup from "@mui/material/ButtonGroup";
+import { Box, Checkbox, Chip, Container, CssBaseline, FormControlLabel, Grid, Paper, Table, TableCell, TableContainer, TableHead, TableRow, TextField, ThemeProvider, Typography, createTheme } from "@mui/material";
 
 const apiAuthenticatedContext: Context<[boolean, Dispatch<boolean>]> = createContext(null)
 const serverIdContext: Context<string> = createContext('')
 const serverCommandsContext: Context<CommandInfo[]> = createContext([])
+
+const defaultTheme = createTheme();
 
 export class CommandInfo {
     name: string
@@ -66,13 +70,9 @@ function Command(p: { command: CommandInfo }) {
     function onFormChange(args) {
         setFormData(args.formData)
     }
-    if (form && p.command.args.properties && Object.entries(p.command.args.properties).length == 0) {
-        handleSubmit()
-    }
+
     return (<>
-        <button className="command" onClick={() => { setForm(true) }}>
-            <span className="commandText"> {p.command.name}</span>
-        </button >
+        <Button variant="contained" onClick={() => { setForm(true) }}>{p.command.name}</Button >
         {
             form && createPortal(
                 <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
@@ -88,20 +88,23 @@ function Command(p: { command: CommandInfo }) {
 function ServerItem(props: { server_info: ServerInfo }) {
     const commands = useContext(serverCommandsContext)
     const name = `${props.server_info.user_id}'s ${props.server_info.image.name} ${props.server_info.image.version} Server`
+    if (props.server_info.ports === null){
+        props.server_info.ports = []
+    }
     return (
         <serverIdContext.Provider value={props.server_info.id_}>
-            <div className="server" id={props.server_info.id_} key={props.server_info.id_}>
-                <StatusRow on={props.server_info.on} text={name} />
-                <div>
-                    {props.server_info.on && <div>
-                        <div>domain: {props.server_info.domain}</div>
-                        <div>ports: {props.server_info.ports.map((port, index, array) => { return `${port.number}/${port.protocol}` })}</div>
-                    </div>}
-                    <div className="commandsGrid">
+            <TableRow>
+                <TableCell>{props.server_info.user_id}</TableCell>
+                <TableCell>{props.server_info.image.name}</TableCell>
+                <TableCell>{props.server_info.image.version}</TableCell>
+                <TableCell>{props.server_info.domain}</TableCell>
+                <TableCell>{props.server_info.ports.map((port, index, array) => { return <Chip label={`${port.number}/${port.protocol}`}/> })}</TableCell>
+                <TableCell>
+                    <ButtonGroup variant="contained" aria-label="outlined button group">
                         {commands.map((command, index, array) => { return <Command command={command} /> })}
-                    </div>
-                </div>
-            </div>
+                    </ButtonGroup>
+                </TableCell>
+            </TableRow>
         </serverIdContext.Provider>
     )
 }
@@ -299,7 +302,18 @@ export default function ServersBoard({ onFail }) {
 
     
     return (
-        <div className="grid">
+        <TableContainer component={Paper}>
+            <Table>
+            <TableHead>
+                <TableRow>
+                    <TableCell>Owner</TableCell>
+                    <TableCell>Server</TableCell>
+                    <TableCell>Version</TableCell>
+                    <TableCell>Domain</TableCell>
+                    <TableCell>Ports</TableCell>
+                    <TableCell>Commands</TableCell>
+                </TableRow>
+            </TableHead>
             <serverCommandsContext.Provider value={loadCommands(api)}>
                 {
                     servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
@@ -308,10 +322,9 @@ export default function ServersBoard({ onFail }) {
                         }
                     )
                 }
-            <button className='command' onClick={()=>{setForm(true)}}>
-                Create Server
-            </button>
             </serverCommandsContext.Provider>
+            </Table>
+            <Button variant="contained" onClick={()=>{setForm(true)}}>Create Server</Button>
             {
             form && createPortal(
                 <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
@@ -320,7 +333,7 @@ export default function ServersBoard({ onFail }) {
                     </div>
                 </div>, document.getElementById('container'))
         }
-        </div>
+        </TableContainer>
     );
 }
 
@@ -365,8 +378,10 @@ export function LoginPage(props: {}) {
         return <Navigate to='/servers' />
     }
 
-    const handleSubmit = () => {
-        fetchToken(username, password).then(
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        fetchToken(data.get('username').toString(), data.get('password').toString()).then(
             (token) => {
                 api.interceptors.request.use(
                     async (config) => {
@@ -383,19 +398,56 @@ export function LoginPage(props: {}) {
     }
 
     return (
-        <div className="login-container">
-            <div>
-                <form className='text' onSubmit={handleSubmit}>
-                    <div>
-                        Username: <input type='text' name='username' onChange={(event) => { setUsername(event.target.value) }} />
-                    </div>
-                    <div>
-                        Password:<input type='password' name='password' onChange={(event) => { setPassword(event.target.value) }} />
-                    </div>
-                    <input type="button" value="submit" onClick={handleSubmit}></input>
-                </form>
-            </div>
-        </div>
+        <ThemeProvider theme={defaultTheme}>
+        <Container component="main" maxWidth="xs">
+          <CssBaseline />
+          <Box
+            sx={{
+              marginTop: 8,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <Typography component="h1" variant="h5">
+              Sign in
+            </Typography>
+            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="username"
+                label="User Name"
+                name="username"
+                autoFocus
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type="password"
+                id="password"
+                autoComplete="current-password"
+              />
+              <FormControlLabel
+                control={<Checkbox value="remember" color="primary" />}
+                label="Remember me"
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+              >
+                Sign In
+              </Button>
+            </Box>
+          </Box>
+        </Container>
+      </ThemeProvider>
     )
 }
 
@@ -449,19 +501,20 @@ export function UsersPage({onFail}){
     let userComponents = []
     
     for(let user of users){
-        userComponents.push(<tr className='users-row'><th className="users-column">{user.username}</th><th  className="users-column">{user.email}</th><th className="users-column">{user.permissions}</th></tr>)
+        userComponents.push(<TableRow className='users-row'><TableCell className="users-column">{user.username}</TableCell><TableCell  className="users-column">{user.email}</TableCell><TableCell className="users-column">{user.permissions}</TableCell></TableRow>)
     }
-    return <div className='users-container'><table className='users-table'>
-        <thead>
-            <tr className="users-headers-row users-headers">
-                <th className="users-column  users-headers">Username</th><th className="users-column users-headers">Email</th><th className="users-column users-headers">Permissions</th>
-            </tr>
-        </thead>
-        {userComponents}
-    </table>
-    <button className='command' onClick={()=>{setForm(true)}}>
+    return <TableContainer >
+            <Table>
+            <TableHead>
+                <TableRow className="users-headers-row users-headers">
+                    <TableCell className="users-column  users-headers">Username</TableCell><TableCell className="users-column users-headers">Email</TableCell><TableCell className="users-column users-headers">Permissions</TableCell>
+                </TableRow>
+            </TableHead>
+            {userComponents}
+        </Table>
+    <Button variant="contained" onClick={()=>{setForm(true)}}>
         Create User
-    </button>
+    </Button>
     {
             form && createPortal(
                 <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
@@ -470,5 +523,5 @@ export function UsersPage({onFail}){
                     </div>
                 </div>, document.getElementById('container'))
         }
-    </div>
+    </TableContainer>
 }

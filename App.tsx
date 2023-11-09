@@ -1,15 +1,13 @@
 import ServersBoard, { ApiWrapper, LoginPage, UsersPage } from "./buttons_menu";
-import "./app.module.css"
 import React, { useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
-import 'bootstrap/dist/css/bootstrap.min.css';
+import '@mui/material';
 
 function Menu({children}){
   const location = useLocation();
   const [path, setPath] = useState('');
   const renavigate = ((path!=location.pathname) && (location.pathname!='/login') && (location.pathname !='/') && (location.pathname != ''))
-  console.log(`Pathname ${location.pathname} path ${path} renavigate ${renavigate}`)
   return <div className='container' id='container'>
   <div className="menu-bar">
     <div onClick={()=>{setPath('/servers')}} className={`menu-item ${location.pathname == '/servers'? "menu-item-selected": ''}`}> Servers</div>
