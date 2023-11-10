@@ -1,17 +1,17 @@
-import React, { Context, Dispatch, ReactElement, createContext, useContext, useEffect, useState } from "react"
+import React, { Context, Dispatch, createContext, useContext, useEffect, useState } from "react"
 import axios, { AxiosInstance } from 'axios';
 import { createPortal } from 'react-dom';
 import { Navigate } from "react-router-dom";
-import Form from "react-jsonschema-form"
 import Button from "@mui/material/Button"
 import ButtonGroup from "@mui/material/ButtonGroup";
-import { Box, Checkbox, Chip, Container, CssBaseline, FormControlLabel, Grid, Paper, Table, TableCell, TableContainer, TableHead, TableRow, TextField, ThemeProvider, Typography, createTheme } from "@mui/material";
+import { Box, Checkbox, Chip, Container, CssBaseline, FormControlLabel, Paper, Popover, Table, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import Form from '@rjsf/mui';
+import validator from '@rjsf/validator-ajv8';
 
 const apiAuthenticatedContext: Context<[boolean, Dispatch<boolean>]> = createContext(null)
 const serverIdContext: Context<string> = createContext('')
 const serverCommandsContext: Context<CommandInfo[]> = createContext([])
 
-const defaultTheme = createTheme();
 
 export class CommandInfo {
     name: string
@@ -45,7 +45,7 @@ function Command(p: { command: CommandInfo }) {
 
     function handleSubmit() {
         let url = `servers/${server_id}`
-        if (p.command.endpoint != ""){
+        if (p.command.endpoint != "") {
             url = `${url}/${p.command.endpoint}`
         }
         switch (p.command.requestType) {
@@ -72,15 +72,14 @@ function Command(p: { command: CommandInfo }) {
     }
 
     return (<>
-        <Button variant="contained" onClick={() => { setForm(true) }}>{p.command.name}</Button >
-        {
-            form && createPortal(
-                <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
-                    <div className='form' onClick={(e) => { e.stopPropagation() }}>
-                        <Form schema={p.command.args} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
-                    </div>
-                </div>, document.getElementById('container'))
-        }
+        <Button onClick={() => { setForm(true) }}>{p.command.name}</Button >
+        <Popover 
+            onClose={() => { setForm(false); setFormData({}); setArgs({}) }}
+            id='root'
+            open={form}
+        >
+            <Form validator={validator} schema={p.command.args} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
+        </Popover>
     </>)
 }
 
@@ -88,7 +87,7 @@ function Command(p: { command: CommandInfo }) {
 function ServerItem(props: { server_info: ServerInfo }) {
     const commands = useContext(serverCommandsContext)
     const name = `${props.server_info.user_id}'s ${props.server_info.image.name} ${props.server_info.image.version} Server`
-    if (props.server_info.ports === null){
+    if (props.server_info.ports === null) {
         props.server_info.ports = []
     }
     return (
@@ -98,9 +97,9 @@ function ServerItem(props: { server_info: ServerInfo }) {
                 <TableCell>{props.server_info.image.name}</TableCell>
                 <TableCell>{props.server_info.image.version}</TableCell>
                 <TableCell>{props.server_info.domain}</TableCell>
-                <TableCell>{props.server_info.ports.map((port, index, array) => { return <Chip label={`${port.number}/${port.protocol}`}/> })}</TableCell>
+                <TableCell>{props.server_info.ports.map((port, index, array) => { return <Chip label={`${port.number}/${port.protocol}`} /> })}</TableCell>
                 <TableCell>
-                    <ButtonGroup variant="contained" aria-label="outlined button group">
+                    <ButtonGroup variant="outlined" aria-label="outlined button group">
                         {commands.map((command, index, array) => { return <Command command={command} /> })}
                     </ButtonGroup>
                 </TableCell>
@@ -163,10 +162,10 @@ function omit(key, obj) {
 }
 
 
-function loadApiDoc(api: AxiosInstance, path: string, method: string){
+function loadApiDoc(api: AxiosInstance, path: string, method: string) {
     const [apiRecord, setApiRecord] = useState(null)
     console.log(apiRecord)
-    if (apiRecord) {        
+    if (apiRecord) {
         const schema = apiRecord.data.paths[path][method]
         let formSchema = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: apiRecord.data.components, default: {} }
         console.log(schema)
@@ -177,7 +176,7 @@ function loadApiDoc(api: AxiosInstance, path: string, method: string){
 
         return JSON.parse(JSON.stringify(formSchema).replaceAll('#/components', '#/definitions'))
     }
-    
+
 
     api.get('/openapi.json').then(
         (value) => {
@@ -225,23 +224,23 @@ export default function ServersBoard({ onFail }) {
     const [form, setForm] = useState(false);
     const [formData, setFormData] = useState({})
     const [images, setImages] = useState([])
-    ''.toLocaleUpperCase
-    let schema = {
-              "properties": {
-                "image_id": {
-                  "type": "string",
-                  "oneOf": images.map((value, index, array)=>{return {"const": value.id_, "title": `${value.name} ${value.version}`}}),
-                  "title": "Image Id"
-                }
-              },
-              "type": "object",
-              "required": [
-                "image_id"
-              ],
-              "title": "CreateServer"
-            }
 
-      
+    let schema = {
+        "properties": {
+            "image_id": {
+                "type": "string",
+                "oneOf": images.map((value, index, array) => { return { "const": value.id_, "title": `${value.name} ${value.version}` } }),
+                "title": "Image Id"
+            }
+        },
+        "type": "object",
+        "required": [
+            "image_id"
+        ],
+        "title": "CreateServer"
+    }
+
+
     console.log(schema)
     const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
 
@@ -257,6 +256,11 @@ export default function ServersBoard({ onFail }) {
                         if (error.response) {
                             if (error.response.status == 401) {
                                 setServers(null)
+                                setApiAuthenticated(false)
+                            }
+                            else if (error.response.status == 403) {
+                                setServers(null)
+                                setApiAuthenticated(false)
                             }
                         }
                     }
@@ -266,11 +270,26 @@ export default function ServersBoard({ onFail }) {
 
     useEffect(() => {
         handleServers()
-        api.get('/images').then((value)=>{
+        api.get('/images').then((value) => {
             setImages(value.data)
-        }).catch()
+        }).catch(
+            (error) => {
+                console.log('Failed to get servers: ' + error);
+                if (error.response) {
+                    if (error.response.status == 401) {
+                        setServers(null)
+                        setApiAuthenticated(false)
+                    }
+                    else if (error.response.status == 403) {
+                        setServers(null)
+                        setApiAuthenticated(false)
+                    }
+                }
+            }
+        )
+
         const interval = setInterval(() => {
-            handleServers()   
+            handleServers()
         }, 5000
         );
         return () => { clearInterval(interval) }
@@ -300,40 +319,40 @@ export default function ServersBoard({ onFail }) {
         setFormData(args.formData)
     }
 
-    
-    return (
+
+    return (<>
         <TableContainer component={Paper}>
             <Table>
-            <TableHead>
-                <TableRow>
-                    <TableCell>Owner</TableCell>
-                    <TableCell>Server</TableCell>
-                    <TableCell>Version</TableCell>
-                    <TableCell>Domain</TableCell>
-                    <TableCell>Ports</TableCell>
-                    <TableCell>Commands</TableCell>
-                </TableRow>
-            </TableHead>
-            <serverCommandsContext.Provider value={loadCommands(api)}>
-                {
-                    servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
-                        (value: ServerInfo, index: number, array) => {
-                            return <ServerItem server_info={value} />
-                        }
-                    )
-                }
-            </serverCommandsContext.Provider>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Owner</TableCell>
+                        <TableCell>Server</TableCell>
+                        <TableCell>Version</TableCell>
+                        <TableCell>Domain</TableCell>
+                        <TableCell>Ports</TableCell>
+                        <TableCell>Commands</TableCell>
+                    </TableRow>
+                </TableHead>
+                <serverCommandsContext.Provider value={loadCommands(api)}>
+                    {
+                        servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
+                            (value: ServerInfo, index: number, array) => {
+                                return <ServerItem server_info={value} />
+                            }
+                        )
+                    }
+                </serverCommandsContext.Provider>
             </Table>
-            <Button variant="contained" onClick={()=>{setForm(true)}}>Create Server</Button>
-            {
-            form && createPortal(
-                <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
-                    <div className='form' onClick={(e) => { e.stopPropagation() }}>
-                        <Form schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
-                    </div>
-                </div>, document.getElementById('container'))
-        }
+            <Popover 
+            onClose={() => { setForm(false); setFormData({}); setArgs({}) }}
+            id='root'
+            open={form}
+        >
+            <Form validator={validator} schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
+        </Popover>
         </TableContainer>
+        <Button variant="contained" onClick={() => { setForm(true) }}>Create Server</Button>
+    </>
     );
 }
 
@@ -357,25 +376,12 @@ const fetchToken = async (username: string, password: string) => {
     }
 };
 
-// api.interceptors.request.use(
-//   async (config) => {
-//     const token = await fetchToken('ACoolName', 'Test');
-//     config.headers.Authorization = `Bearer ${token}`;
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
-
 
 export function LoginPage(props: {}) {
-    const [username, setUsername] = useState(null)
-    const [password, setPassword] = useState(null)
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
 
     if (apiAuthenticated) {
-        return <Navigate to='/servers' />
+        return <Navigate to='/' />
     }
 
     const handleSubmit = (event) => {
@@ -398,69 +404,67 @@ export function LoginPage(props: {}) {
     }
 
     return (
-        <ThemeProvider theme={defaultTheme}>
-        <Container component="main" maxWidth="xs">
-          <CssBaseline />
-          <Box
-            sx={{
-              marginTop: 8,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            <Typography component="h1" variant="h5">
-              Sign in
-            </Typography>
-            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="username"
-                label="User Name"
-                name="username"
-                autoFocus
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-              />
-              <FormControlLabel
-                control={<Checkbox value="remember" color="primary" />}
-                label="Remember me"
-              />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{ mt: 3, mb: 2 }}
-              >
-                Sign In
-              </Button>
-            </Box>
-          </Box>
-        </Container>
-      </ThemeProvider>
+            <Container component="main" maxWidth="xs">
+                <CssBaseline />
+                <Box
+                    sx={{
+                        marginTop: 8,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Typography component="h1" variant="h5">
+                        Sign in
+                    </Typography>
+                    <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+                        <TextField
+                            margin="normal"
+                            required
+                            fullWidth
+                            id="username"
+                            label="User Name"
+                            name="username"
+                            autoFocus
+                        />
+                        <TextField
+                            margin="normal"
+                            required
+                            fullWidth
+                            name="password"
+                            label="Password"
+                            type="password"
+                            id="password"
+                            autoComplete="current-password"
+                        />
+                        <FormControlLabel
+                            control={<Checkbox value="remember" color="primary" />}
+                            label="Remember me"
+                        />
+                        <Button
+                            type="submit"
+                            fullWidth
+                            variant="contained"
+                            sx={{ mt: 3, mb: 2 }}
+                        >
+                            Sign In
+                        </Button>
+                    </Box>
+                </Box>
+            </Container>
     )
 }
 
 
-interface User{
+interface User {
     username: string
     email: string
     permissions: string[]
 }
 
-export function UsersPage({onFail}){
-    const [apiAuthenticated, _] = useContext(apiAuthenticatedContext)
-    const [users, setUsers]:[User[], Dispatch<User[]>] = useState([])
+export function UsersPage({ onFail }) {
+    const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
+    const [users, setUsers]: [User[], Dispatch<User[]>] = useState([])
 
     const [form, setForm] = useState(false);
     const [formData, setFormData] = useState({})
@@ -469,7 +473,7 @@ export function UsersPage({onFail}){
 
     const schema = loadApiDoc(api, '/users', 'post')
 
-    if (!apiAuthenticated){
+    if (!apiAuthenticated) {
         return onFail()
     }
 
@@ -486,25 +490,51 @@ export function UsersPage({onFail}){
         setFormData(args.formData)
     }
 
-    useEffect(()=>{
-        if (!apiAuthenticated){
+    useEffect(() => {
+        if (!apiAuthenticated) {
             return
         }
-        api.get('/users').then((response)=>{setUsers(response.data)})
+        api.get('/users').then((response) => { setUsers(response.data) }).catch(
+            (error) => {
+                console.log('Failed to get servers: ' + error);
+                if (error.response) {
+                    if (error.response.status == 401) {
+                        setApiAuthenticated(false)
+                    }
+                    else if (error.response.status == 403) {
+                        setApiAuthenticated(false)
+                    }
+                }
+            }
+        )
+
         const interval = setInterval(() => {
-            api.get('/users').then((response)=>{setUsers(response.data)}) 
+            api.get('/users').then((response) => { setUsers(response.data) }).catch(
+                (error) => {
+                    console.log('Failed to get servers: ' + error);
+                    if (error.response) {
+                        if (error.response.status == 401) {
+                            setApiAuthenticated(false)
+                        }
+                        else if (error.response.status == 403) {
+                            setApiAuthenticated(false)
+                        }
+                    }
+                }
+            )
+
         }, 5000
         );
         return () => { clearInterval(interval) }
     }, [apiAuthenticated])
 
     let userComponents = []
-    
-    for(let user of users){
-        userComponents.push(<TableRow className='users-row'><TableCell className="users-column">{user.username}</TableCell><TableCell  className="users-column">{user.email}</TableCell><TableCell className="users-column">{user.permissions}</TableCell></TableRow>)
+
+    for (let user of users) {
+        userComponents.push(<TableRow className='users-row'><TableCell className="users-column">{user.username}</TableCell><TableCell className="users-column">{user.email}</TableCell><TableCell className="users-column">{user.permissions}</TableCell></TableRow>)
     }
     return <TableContainer >
-            <Table>
+        <Table>
             <TableHead>
                 <TableRow className="users-headers-row users-headers">
                     <TableCell className="users-column  users-headers">Username</TableCell><TableCell className="users-column users-headers">Email</TableCell><TableCell className="users-column users-headers">Permissions</TableCell>
@@ -512,16 +542,15 @@ export function UsersPage({onFail}){
             </TableHead>
             {userComponents}
         </Table>
-    <Button variant="contained" onClick={()=>{setForm(true)}}>
-        Create User
-    </Button>
-    {
-            form && createPortal(
-                <div className='form-background' onClick={() => { setForm(false); setFormData({}); setArgs({}) }}>
-                    <div className='form' onClick={(e) => { e.stopPropagation() }}>
-                        <Form schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
-                    </div>
-                </div>, document.getElementById('container'))
-        }
+        <Button variant="contained" onClick={() => { setForm(true) }}>
+            Create User
+        </Button>
+        <Popover 
+            onClose={() => { setForm(false); setFormData({}); setArgs({}) }}
+            id='root'
+            open={form}
+        >
+            <Form validator={validator} schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
+        </Popover>
     </TableContainer>
 }
