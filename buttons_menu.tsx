@@ -149,12 +149,8 @@ const api: AxiosInstance = axios.create({
 export function ApiWrapper({ children }) {
     const token = Cookies.get('token')
     if (token){
-        api.interceptors.request.use(
-            async (config) => {
-                config.headers.Authorization = `Bearer ${token}`;
-                return config
-            }
-        );
+        api.defaults.headers.common.Authorization =  `Bearer ${token}`;
+
     }
     const [apiAuthenticated, setApiAuthenticated] = useState(Boolean(token))
     if (!apiAuthenticated){
@@ -244,26 +240,29 @@ export default function ServersBoard() {
     const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
 
     function handleServers() {
-        if (apiAuthenticated) {
-            let servers_promised = loadServers(api)
-            servers_promised.then((response) => {
-                setServers(response.data)
-            })
-                .catch(
-                    (error) => {
-                        console.log('Failed to get servers: ' + error);
-                        if (error.response) {
-                            if (error.response.status == 401) {
-                                setApiAuthenticated(false)
-                            }
-                            else if (error.response.status == 403) {
-                                setApiAuthenticated(false)
-                            }
+        if (!apiAuthenticated) {
+            return
+        }
+
+        let servers_promised = loadServers(api)
+        servers_promised.then((response) => {
+            setServers(response.data)
+        })
+            .catch(
+                (error) => {
+                    console.log('Failed to get servers: ' + error);
+                    if (error.response) {
+                        if (error.response.status == 401) {
+                            setApiAuthenticated(false)
+                        }
+                        else if (error.response.status == 403) {
+                            setApiAuthenticated(false)
                         }
                     }
-                )
+                }
+            )
         }
-    }
+    
 
     useEffect(() => {
         handleServers()
@@ -289,10 +288,6 @@ export default function ServersBoard() {
         );
         return () => { clearInterval(interval) }
     }, [apiAuthenticated])
-
-    if (!apiAuthenticated) {
-        setApiAuthenticated(false)
-    }
 
     function handleSubmit() {
         let url = `servers`
@@ -377,16 +372,14 @@ export function LoginPage(props: {}) {
         const data = new FormData(event.currentTarget);
         fetchToken(data.get('username').toString(), data.get('password').toString()).then(
             (token) => {
-                api.interceptors.request.use(
-                    async (config) => {
-                        config.headers.Authorization = `Bearer ${token}`;
-                        return config
-                    }
-                );
-                setApiAuthenticated(true)
+                api.defaults.headers.common.Authorization =  `Bearer ${token}`;
+                    
+                ;
                 if (data.get('remember')){
                     Cookies.set('token', token)
                 }
+                setApiAuthenticated(true)
+
             },
             (error) => {
                 return Promise.reject(error);
