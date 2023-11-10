@@ -158,8 +158,8 @@ export function ApiWrapper({ children }) {
     }
     const [apiAuthenticated, setApiAuthenticated] = useState(Boolean(token))
     if (!apiAuthenticated){
-        Cookies.set('token', null)
-    }
+        Cookies.remove('token', { path: '/', domain: 'games.acooldomain.co' })
+        }
     const path = useLocation()
     return (<apiAuthenticatedContext.Provider value={[apiAuthenticated, setApiAuthenticated]}>
         {children}
