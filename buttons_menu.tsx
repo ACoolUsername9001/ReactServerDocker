@@ -157,6 +157,9 @@ export function ApiWrapper({ children }) {
         );
     }
     const [apiAuthenticated, setApiAuthenticated] = useState(Boolean(token))
+    if (!apiAuthenticated){
+        Cookies.set('token', null)
+    }
     const path = useLocation()
     return (<apiAuthenticatedContext.Provider value={[apiAuthenticated, setApiAuthenticated]}>
         {children}
@@ -251,11 +254,9 @@ export default function ServersBoard() {
                         console.log('Failed to get servers: ' + error);
                         if (error.response) {
                             if (error.response.status == 401) {
-                                setServers(null)
                                 setApiAuthenticated(false)
                             }
                             else if (error.response.status == 403) {
-                                setServers(null)
                                 setApiAuthenticated(false)
                             }
                         }
@@ -270,14 +271,12 @@ export default function ServersBoard() {
             setImages(value.data)
         }).catch(
             (error) => {
-                console.log('Failed to get servers: ' + error);
+                console.log('Failed to get images: ' + error);
                 if (error.response) {
                     if (error.response.status == 401) {
-                        setServers(null)
                         setApiAuthenticated(false)
                     }
                     else if (error.response.status == 403) {
-                        setServers(null)
                         setApiAuthenticated(false)
                     }
                 }
@@ -291,10 +290,6 @@ export default function ServersBoard() {
         return () => { clearInterval(interval) }
     }, [apiAuthenticated])
 
-    if (servers == null) {
-        setServers([]);
-        setApiAuthenticated(false)
-    }
     if (!apiAuthenticated) {
         setApiAuthenticated(false)
     }
@@ -389,7 +384,6 @@ export function LoginPage(props: {}) {
                     }
                 );
                 setApiAuthenticated(true)
-                console.log(data.get('remember'))
                 if (data.get('remember')){
                     Cookies.set('token', token)
                 }
@@ -504,7 +498,7 @@ export function UsersPage({}) {
         const interval = setInterval(() => {
             api.get('/users').then((response) => { setUsers(response.data) }).catch(
                 (error) => {
-                    console.log('Failed to get servers: ' + error);
+                    console.log('Failed to get users: ' + error);
                     if (error.response) {
                         if (error.response.status == 401) {
                             setApiAuthenticated(false)
