@@ -8,7 +8,14 @@ import { Box, Paper, Tab, Tabs, ThemeProvider, Typography, createTheme} from "@m
 const defaultTheme = createTheme({
   palette:{
     mode: 'dark'
-  }
+  },
+  // components:{
+  //   Form:{
+  //     root:{
+        
+  //     }
+  //   }
+  // }
 });
 
 function a11yProps(index: number) {
@@ -53,10 +60,10 @@ function Menu() {
           </Tabs>
         </Box>
         <CustomTabPanel value={value} index={0}>
-          <ServersBoard onFail={() => { return <Navigate to='/login' /> }} />
+          <ServersBoard/>
         </CustomTabPanel>
         <CustomTabPanel value={value} index={1}>
-          <UsersPage onFail={() => { return <Navigate to='/login' /> }} />
+          <UsersPage/>
         </CustomTabPanel>
       </Box>
 
@@ -67,14 +74,16 @@ function Menu() {
 export default function App() {
   return (
     <ThemeProvider theme={defaultTheme}>
-      <ApiWrapper>
-        <BrowserRouter>
-          <Routes>
-            <Route index element={<Menu />} />
-            <Route path='/login' element={<LoginPage />} />
-          </Routes>
-        </BrowserRouter>
-      </ApiWrapper>
+      <BrowserRouter>
+        <ApiWrapper>
+
+            <Routes>
+              <Route index element={<Menu />} />
+              <Route path='/login' element={<LoginPage />} />
+            </Routes>
+          </ApiWrapper>
+      </BrowserRouter>
+      
     </ThemeProvider>
   )
 }

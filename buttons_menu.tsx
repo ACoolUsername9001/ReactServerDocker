@@ -1,12 +1,13 @@
 import React, { Context, Dispatch, createContext, useContext, useEffect, useState } from "react"
 import axios, { AxiosInstance } from 'axios';
 import { createPortal } from 'react-dom';
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import Button from "@mui/material/Button"
 import ButtonGroup from "@mui/material/ButtonGroup";
 import { Box, Checkbox, Chip, Container, CssBaseline, FormControlLabel, Paper, Popover, Table, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
+import Cookies from 'js-cookie'
 
 const apiAuthenticatedContext: Context<[boolean, Dispatch<boolean>]> = createContext(null)
 const serverIdContext: Context<string> = createContext('')
@@ -146,29 +147,29 @@ const api: AxiosInstance = axios.create({
 
 
 export function ApiWrapper({ children }) {
-    const [apiAuthenticated, setApiAuthenticated] = useState(false)
+    const token = Cookies.get('token')
+    if (token){
+        api.interceptors.request.use(
+            async (config) => {
+                config.headers.Authorization = `Bearer ${token}`;
+                return config
+            }
+        );
+    }
+    const [apiAuthenticated, setApiAuthenticated] = useState(Boolean(token))
+    const path = useLocation()
     return (<apiAuthenticatedContext.Provider value={[apiAuthenticated, setApiAuthenticated]}>
         {children}
+        {!apiAuthenticated && path.key != '/login' && <Navigate to='/login'/>}
     </apiAuthenticatedContext.Provider>)
-
-    function omit(key, obj) {
-        const { [key]: omitted, ...rest } = obj;
-        return rest;
-    }
-}
-function omit(key, obj) {
-    const { [key]: omitted, ...rest } = obj;
-    return rest;
 }
 
 
 function loadApiDoc(api: AxiosInstance, path: string, method: string) {
     const [apiRecord, setApiRecord] = useState(null)
-    console.log(apiRecord)
     if (apiRecord) {
         const schema = apiRecord.data.paths[path][method]
         let formSchema = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: apiRecord.data.components, default: {} }
-        console.log(schema)
         if (schema.requestBody) {
             formSchema = schema.requestBody.content['application/json'].schema
             formSchema.definitions = apiRecord.data.components
@@ -189,8 +190,6 @@ function loadApiDoc(api: AxiosInstance, path: string, method: string) {
 function loadCommands(api: AxiosInstance): CommandInfo[] {
     const [commands, setCommands] = useState([])
     if (commands.length > 0) {
-        console.log(commands)
-
         return commands
     }
 
@@ -200,10 +199,8 @@ function loadCommands(api: AxiosInstance): CommandInfo[] {
             let paths: Record<string, any> = value.data.paths
             for (let [path, request] of Object.entries(paths)) {
                 if (path.startsWith('/servers/{server_id}')) {
-                    console.log(request)
                     for (let [method, schema] of Object.entries(request)) {
                         let formSchema = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: value.data.components, default: {} }
-                        console.log(formSchema)
                         if (schema.requestBody) {
                             formSchema = schema.requestBody.content['application/json'].schema
                             formSchema.definitions = value.data.components
@@ -218,7 +215,7 @@ function loadCommands(api: AxiosInstance): CommandInfo[] {
     return commands
 }
 
-export default function ServersBoard({ onFail }) {
+export default function ServersBoard() {
     const [servers, setServers] = useState([]);
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [form, setForm] = useState(false);
@@ -241,7 +238,6 @@ export default function ServersBoard({ onFail }) {
     }
 
 
-    console.log(schema)
     const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
 
     function handleServers() {
@@ -298,12 +294,9 @@ export default function ServersBoard({ onFail }) {
     if (servers == null) {
         setServers([]);
         setApiAuthenticated(false)
-        return onFail()
     }
     if (!apiAuthenticated) {
         setApiAuthenticated(false)
-
-        return onFail();
     }
 
     function handleSubmit() {
@@ -396,6 +389,10 @@ export function LoginPage(props: {}) {
                     }
                 );
                 setApiAuthenticated(true)
+                console.log(data.get('remember'))
+                if (data.get('remember')){
+                    Cookies.set('token', token)
+                }
             },
             (error) => {
                 return Promise.reject(error);
@@ -438,7 +435,7 @@ export function LoginPage(props: {}) {
                             autoComplete="current-password"
                         />
                         <FormControlLabel
-                            control={<Checkbox value="remember" color="primary" />}
+                            control={<Checkbox value={true} name='remember' color="primary" />}
                             label="Remember me"
                         />
                         <Button
@@ -462,7 +459,7 @@ interface User {
     permissions: string[]
 }
 
-export function UsersPage({ onFail }) {
+export function UsersPage({}) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [users, setUsers]: [User[], Dispatch<User[]>] = useState([])
 
@@ -472,10 +469,6 @@ export function UsersPage({ onFail }) {
     const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
 
     const schema = loadApiDoc(api, '/users', 'post')
-
-    if (!apiAuthenticated) {
-        return onFail()
-    }
 
     function handleSubmit() {
         let url = `users`
