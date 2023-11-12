@@ -85,7 +85,7 @@ export function UsersPage({}) {
             Create User
         </Button>
         <Popover 
-            onClose={() => { setForm(false); setFormData({}); setArgs({}) }}
+            onClose={() => { setForm(false); setFormData({}); }}
             id='root'
             open={form}
         >

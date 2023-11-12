@@ -1,6 +1,6 @@
 import { Box, Typography, Paper, Tabs, Tab, ThemeProvider} from "@mui/material";
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { defaultTheme, ApiWrapper } from "./src/common";
 import { LoginPage } from "./src/login";
 import ServersBoard from "./src/servers";
@@ -35,7 +35,7 @@ function CustomTabPanel(props) {
 }
 
 function Menu() {
-  const [value, setValue] = React.useState(0);
+   const [value, setValue] = React.useState(0);
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };

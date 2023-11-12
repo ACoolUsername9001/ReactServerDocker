@@ -246,7 +246,7 @@ export default function ServersBoard() {
                 </TableBody>
             </Table>
             <Popover 
-            onClose={() => { setForm(false); setFormData({}); setArgs({}) }}
+            onClose={() => { setForm(false); setFormData({});}}
             id='root'
             open={form}
         >
