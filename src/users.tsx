@@ -1,4 +1,4 @@
-import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover } from "@mui/material"
+import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect } from "react"
 import Form from "@rjsf/mui"
 import { apiAuthenticatedContext, loadApiDoc, api } from "./common"
@@ -75,16 +75,18 @@ export function UsersPage({}) {
     let userComponents = []
 
     for (let user of users) {
-        userComponents.push(<TableRow className='users-row'><TableCell className="users-column">{user.username}</TableCell><TableCell className="users-column">{user.email}</TableCell><TableCell className="users-column">{user.permissions}</TableCell></TableRow>)
+        userComponents.push(<TableRow><TableCell>{user.username}</TableCell><TableCell>{user.email}</TableCell><TableCell>{user.permissions.map((value, index, array)=>{return <Chip label={value}/>})}</TableCell></TableRow>)
     }
-    return <TableContainer >
+    return <TableContainer component={Paper} >
         <Table>
             <TableHead>
                 <TableRow className="users-headers-row users-headers">
                     <TableCell className="users-column  users-headers">Username</TableCell><TableCell className="users-column users-headers">Email</TableCell><TableCell className="users-column users-headers">Permissions</TableCell>
                 </TableRow>
             </TableHead>
-            {userComponents}
+            <TableBody>
+                {userComponents}
+            </TableBody>
         </Table>
         <Button variant="contained" onClick={() => { setForm(true) }}>
             Create User

@@ -1,7 +1,7 @@
 import { AxiosInstance } from "axios"
 import { api, apiAuthenticatedContext } from "./common"
 import React, { Context, Dispatch, createContext, useContext, useEffect, useState } from "react"
-import { TableRow, TableCell, Chip, Button, ButtonGroup, Popover, Paper, Table, TableContainer, TableHead } from "@mui/material"
+import { TableRow, TableCell, Chip, Button, ButtonGroup, Popover, Paper, Table, TableContainer, TableHead, TableBody } from "@mui/material"
 import Form from '@rjsf/mui';
 import validator from '@rjsf/validator-ajv8';
 import { ServerInfo } from "./interfaces"
@@ -237,15 +237,18 @@ export default function ServersBoard() {
                         <TableCell>Commands</TableCell>
                     </TableRow>
                 </TableHead>
-                <serverCommandsContext.Provider value={loadCommands(api)}>
-                    {
-                        servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
-                            (value: ServerInfo, index: number, array) => {
-                                return <ServerItem server_info={value} />
-                            }
-                        )
-                    }
-                </serverCommandsContext.Provider>
+                <TableBody>
+
+                    <serverCommandsContext.Provider value={loadCommands(api)}>
+                        {
+                            servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
+                                (value: ServerInfo, index: number, array) => {
+                                    return <ServerItem server_info={value} />
+                                }
+                            )
+                        }
+                    </serverCommandsContext.Provider>
+                </TableBody>
             </Table>
             <Popover 
             onClose={() => { setForm(false); setFormData({}); setArgs({}) }}
