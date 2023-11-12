@@ -21,3 +21,19 @@ export interface ServerInfo {
     ports: Port[] | null
     domain: string
 }
+
+
+export interface User {
+    username: string
+    email: string
+    permissions: string[]
+}
+
+
+export interface Browser {
+    id_: string
+    domain: string
+    url: string
+    owner_id: string
+    connected_to: ServerInfo
+}

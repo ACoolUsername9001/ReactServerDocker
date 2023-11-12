@@ -5,6 +5,7 @@ import { defaultTheme, ApiWrapper } from "./src/common";
 import { LoginPage } from "./src/login";
 import ServersBoard from "./src/servers";
 import { UsersPage } from "./src/users";
+import { BrowsersPage } from "./src/browsers";
 
 function a11yProps(index: number) {
   return {
@@ -45,6 +46,7 @@ function Menu() {
           <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" sx={{ width: '100%', alignItems: 'center' }} >
             <Tab label="Servers" {...a11yProps(0)} sx={{ width: '100%', justifyContent: 'center', alignSelf: 'center' }} />
             <Tab label="Users" {...a11yProps(1)} sx={{ width: '100%', justifyContent: 'center', alignSelf: 'center' }} />
+            <Tab label="Browsers" {...a11yProps(2)} sx={{ width: '100%', justifyContent: 'center', alignSelf: 'center' }} />
           </Tabs>
         </Box>
         <CustomTabPanel value={value} index={0}>
@@ -52,6 +54,9 @@ function Menu() {
         </CustomTabPanel>
         <CustomTabPanel value={value} index={1}>
           <UsersPage/>
+        </CustomTabPanel>
+        <CustomTabPanel value={value} index={2}>
+          <BrowsersPage/>
         </CustomTabPanel>
       </Box>
 

@@ -20,7 +20,7 @@ class CommandInfo {
     }
 }
 
-async function loadServers(api: AxiosInstance): Promise<{ status: number, data: ServerInfo[] }> {
+export async function loadServers(api: AxiosInstance): Promise<{ status: number, data: ServerInfo[] }> {
     let response = await api.get('/servers')
     return {
         status: response.status,
@@ -65,7 +65,6 @@ function Command(p: { command: CommandInfo }) {
     const [form, setForm] = useState(false);
     const [formData, setFormData] = useState({})
 
-    const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
 
 
     function handleSubmit() {
@@ -87,7 +86,6 @@ function Command(p: { command: CommandInfo }) {
                 break
             }
         }
-        setArgs({})
         setForm(false)
         setFormData(null)
     }
@@ -99,7 +97,7 @@ function Command(p: { command: CommandInfo }) {
     return (<>
         <Button onClick={() => { setForm(true) }}>{p.command.name}</Button >
         <Popover 
-            onClose={() => { setForm(false); setFormData({}); setArgs({}) }}
+            onClose={() => { setForm(false); setFormData({}); }}
             id='root'
             open={form}
         >
@@ -158,8 +156,6 @@ export default function ServersBoard() {
     }
 
 
-    const [args, setArgs]: [Record<string, any>, Dispatch<Record<string, any>>] = useState({})
-
     function handleServers() {
         if (!apiAuthenticated) {
             return
@@ -214,7 +210,6 @@ export default function ServersBoard() {
         let url = `servers`
         api.post(url, formData)
 
-        setArgs({})
         setForm(false)
         setFormData(null)
     }
