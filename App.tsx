@@ -1,22 +1,10 @@
-import ServersBoard, { ApiWrapper, LoginPage, UsersPage } from "./buttons_menu";
-import React, { useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-
-import '@mui/material';
-import { Box, Paper, Tab, Tabs, ThemeProvider, Typography, createTheme} from "@mui/material";
-
-const defaultTheme = createTheme({
-  palette:{
-    mode: 'dark'
-  },
-  // components:{
-  //   Form:{
-  //     root:{
-        
-  //     }
-  //   }
-  // }
-});
+import { Box, Typography, Paper, Tabs, Tab, ThemeProvider} from "@mui/material";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { defaultTheme, ApiWrapper } from "./src/common";
+import { LoginPage } from "./src/login";
+import ServersBoard from "./src/servers";
+import { UsersPage } from "./src/users";
 
 function a11yProps(index: number) {
   return {
