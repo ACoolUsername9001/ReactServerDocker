@@ -1,11 +1,28 @@
 import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip } from "@mui/material"
-import React, { useContext, Dispatch, useState, useEffect } from "react"
+import React, { useContext, Dispatch, useState, useEffect, Context, createContext } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, loadApiDoc, api } from "./common"
+import { apiAuthenticatedContext, loadApiDoc, api, ActionInfo, loadActions, ActionGroup, actionIdentifierContext } from "./common"
 import validator from '@rjsf/validator-ajv8';
-import {User} from './interfaces'
+import { User } from './interfaces'
 
-export function UsersPage({}) {
+const UserActionsContext: Context<ActionInfo[]> = createContext([])
+
+
+function UserItem(p: { user: User }) {
+    const user = p.user;
+    const userActions = useContext(UserActionsContext)
+
+    return (
+        <TableRow>
+            <TableCell>{user.username}</TableCell>
+            <TableCell>{user.email}</TableCell>
+            <TableCell>{user.permissions.map((value, index, array) => { return <Chip label={value} /> })}</TableCell>
+            <TableCell><ActionGroup actions={userActions} identifierSubstring="username"/></TableCell>
+        </TableRow>
+    )
+}
+
+export function UsersPage({ }) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [users, setUsers]: [User[], Dispatch<User[]>] = useState([])
 
@@ -68,23 +85,29 @@ export function UsersPage({}) {
     let userComponents = []
 
     for (let user of users) {
-        userComponents.push(<TableRow><TableCell>{user.username}</TableCell><TableCell>{user.email}</TableCell><TableCell>{user.permissions.map((value, index, array)=>{return <Chip label={value}/>})}</TableCell></TableRow>)
+        userComponents.push(<actionIdentifierContext.Provider value={user.username}><UserItem user={user} /></actionIdentifierContext.Provider>)
     }
+
     return <TableContainer component={Paper} >
         <Table>
             <TableHead>
-                <TableRow className="users-headers-row users-headers">
-                    <TableCell className="users-column  users-headers">Username</TableCell><TableCell className="users-column users-headers">Email</TableCell><TableCell className="users-column users-headers">Permissions</TableCell>
+                <TableRow>
+                    <TableCell>Username</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Permissions</TableCell>
+                    <TableCell>Actions</TableCell>
                 </TableRow>
             </TableHead>
             <TableBody>
-                {userComponents}
+                <UserActionsContext.Provider value={loadActions(api, '/users/{username}')}>
+                    {userComponents}
+                </UserActionsContext.Provider>
             </TableBody>
         </Table>
         <Button variant="contained" onClick={() => { setForm(true) }}>
             Create User
         </Button>
-        <Popover 
+        <Popover
             onClose={() => { setForm(false); setFormData({}); }}
             id='root'
             open={form}

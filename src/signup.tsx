@@ -1,15 +1,15 @@
 import { CssBaseline, Box, Typography, TextField, FormControlLabel, Checkbox, Container, Button } from "@mui/material";
 import React, { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { api, apiAuthenticatedContext } from "./common";
 import Cookies from 'js-cookie'
+import { fetchToken } from "./login";
 
-export const fetchToken = async (username: string, password: string, remember: boolean) => {
+const signUp = async (username: string, password: string, token: string) => {
     try {
-        const response = await api.post('/token', {
+        const response = await api.post(`/signup?token=${token}`, {
             username: username,
             password: password,
-            remember: remember,
         }, {
         });
         return response.data.access_token;
@@ -19,8 +19,10 @@ export const fetchToken = async (username: string, password: string, remember: b
     }
 };
 
-export function LoginPage(props: {}) {
+export function SignupPage(props: {}) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
+    const [searchParam, setSearchParam] = useSearchParams();
+    const token = searchParam.get('token');
 
     if (apiAuthenticated) {
         return <Navigate to='/' />
@@ -29,17 +31,22 @@ export function LoginPage(props: {}) {
     const handleSubmit = (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        fetchToken(data.get('username').toString(), data.get('password').toString(), Boolean(data.get('remember'))).then(
-            (token) => {
-                api.defaults.headers.common.Authorization =  `Bearer ${token}`;
-                    
-                ;
-                Cookies.set('token', token)
-                setApiAuthenticated(true)
+        const username = data.get('username').toString();
+        const password = data.get('password').toString()
 
-            },
-            (error) => {
-                return Promise.reject(error);
+        signUp(username, password, token).then(
+            ()=>{
+                fetchToken(username, password, true).then(
+                    (token) => {
+                        api.defaults.headers.common.Authorization =  `Bearer ${token}`;
+                        ;
+                        Cookies.set('token', token)
+                        setApiAuthenticated(true)
+                    },
+                    (error) => {
+                        return Promise.reject(error);
+                    }
+                    )
             }
         )
     }
@@ -56,7 +63,7 @@ export function LoginPage(props: {}) {
                     }}
                 >
                     <Typography component="h1" variant="h5">
-                        Sign in
+                        Sign up
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                         <TextField
@@ -76,11 +83,7 @@ export function LoginPage(props: {}) {
                             label="Password"
                             type="password"
                             id="password"
-                            autoComplete="current-password"
-                        />
-                        <FormControlLabel
-                            control={<Checkbox value={true} name='remember' color="primary" />}
-                            label="Remember me"
+                            autoComplete="new-password"
                         />
                         <Button
                             type="submit"
@@ -88,11 +91,10 @@ export function LoginPage(props: {}) {
                             variant="contained"
                             sx={{ mt: 3, mb: 2 }}
                         >
-                            Sign In
+                            Sign Up
                         </Button>
                     </Box>
                 </Box>
             </Container>
     )
 }
-

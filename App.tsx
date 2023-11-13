@@ -6,6 +6,7 @@ import { LoginPage } from "./src/login";
 import ServersBoard from "./src/servers";
 import { UsersPage } from "./src/users";
 import { BrowsersPage } from "./src/browsers";
+import { SignupPage } from "./src/signup";
 
 function a11yProps(index: number) {
   return {
@@ -72,7 +73,9 @@ export default function App() {
 
             <Routes>
               <Route index element={<Menu />} />
-              <Route path='/login' element={<LoginPage />} />
+              <Route path='login' element={<LoginPage />} />
+              <Route path='signup' element={<SignupPage/>} />
+
             </Routes>
           </ApiWrapper>
       </BrowserRouter>
