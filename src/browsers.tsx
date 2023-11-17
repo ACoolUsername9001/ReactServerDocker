@@ -1,7 +1,7 @@
 import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip, Link, ButtonGroup, Modal, Box } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect, createContext } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, loadApiDoc, api, ActionItem } from "./common"
+import { apiAuthenticatedContext, loadApiDoc, api, ActionItem, formModalStyle } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { Browser, ServerInfo } from "./interfaces";
 import { loadServers } from "./servers";
@@ -40,7 +40,9 @@ function BrowserActions() {
             open={form}
 
         >
-            <Form validator={validator} schema={schema} onSubmit={handleSubmit} />
+            <Box sx={formModalStyle}>
+                <Form validator={validator} schema={schema} onSubmit={handleSubmit} />
+            </Box>
         </Modal>
     </>
     )
