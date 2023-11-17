@@ -1,17 +1,17 @@
-import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip, Link, ButtonGroup } from "@mui/material"
+import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip, Link, ButtonGroup, Modal, Box } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect, createContext } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, loadApiDoc, api } from "./common"
+import { apiAuthenticatedContext, loadApiDoc, api, ActionItem } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { Browser, ServerInfo } from "./interfaces";
 import { loadServers } from "./servers";
 
 const browserContext = createContext(null)
 
-function BrowserActions(){
+function BrowserActions() {
     const browser = useContext(browserContext)
     const [form, setForm] = useState(false);
-        let schema = {
+    let schema = {
         "properties": {
 
         },
@@ -23,36 +23,32 @@ function BrowserActions(){
 
     function handleSubmit() {
         let url = `browsers`
-        api.delete(url, {data: {server_id: browser.connected_to.id_}})
+        api.delete(url, { data: { server_id: browser.connected_to.id_ } })
 
         setForm(false)
     }
-    return  (<>
-    <ButtonGroup variant="outlined">
-        <Button  rel="noopener noreferrer" target="_blank" href={`https://${browser.url}`}>Browse</Button>
-        <Button onClick={()=>{
-            setForm(true);
+    return (<>
+        <ButtonGroup variant="outlined">
+            <Button rel="noopener noreferrer" target="_blank" href={`https://${browser.url}`}>Browse</Button>
+            <Button onClick={() => {
+                setForm(true);
 
-        }}>Stop</Button>
-    </ButtonGroup>
-    <Popover 
+            }}>Stop Browsing</Button>
+        </ButtonGroup>
+        <Modal
             onClose={() => { setForm(false); }}
             open={form}
 
         >
             <Form validator={validator} schema={schema} onSubmit={handleSubmit} />
-        </Popover>
+        </Modal>
     </>
     )
 }
 
-export function BrowsersPage({}) {
+export function BrowsersPage({ }) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [browsers, setBrowsers]: [Browser[], Dispatch<Browser[]>] = useState([])
-
-    const [form, setForm] = useState(false);
-    const [delete_form, setDeleteForm] = useState(false);
-    const [formData, setFormData] = useState({})
     const [servers, setServers]: [ServerInfo[], Dispatch<ServerInfo[]>] = useState([])
 
     let schema = {
@@ -70,17 +66,6 @@ export function BrowsersPage({}) {
         "title": "Create Browser"
     }
 
-    function handleSubmit() {
-        let url = `browsers`
-        api.post(url, formData)
-
-        setForm(false)
-        setFormData(null)
-    }
-
-    function onFormChange(args) {
-        setFormData(args.formData)
-    }
 
     useEffect(() => {
         if (!apiAuthenticated) {
@@ -131,33 +116,27 @@ export function BrowsersPage({}) {
                     <TableCell>{browser.connected_to.image.name}</TableCell>
                     <TableCell>{browser.connected_to.image.version}</TableCell>
                     <TableCell>
-                        <BrowserActions/>
+                        <BrowserActions />
                     </TableCell>
                 </TableRow>
             </browserContext.Provider>
         )
     }
-    return <TableContainer component={Paper} >
-        <Table>
-            <TableHead>
-                <TableRow>
-                    <TableCell>Browser Owner</TableCell><TableCell>Server Owner</TableCell><TableCell>Server Game</TableCell><TableCell>Game Version</TableCell><TableCell>Actions</TableCell>
-                </TableRow>
-            </TableHead>
-            <TableBody>
-                {browserComponents}
-            </TableBody>
-        </Table>
-        <Button id={'create-browser-button'} variant="contained" onClick={() => { setForm(true); loadServers(api).then(({status, data})=>setServers(data)).catch((reason)=>console.log("Failed to load servers" + reason)) }}>
-            Create Browser
-        </Button>
-        <Popover 
-            onClose={() => { setForm(false); setFormData({}); }}
-            anchorEl={document.getElementById('create-browser-button')}
-            open={form}
-
-        >
-            <Form validator={validator} schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
-        </Popover>
-    </TableContainer>
+    return <Box padding={4}>
+        <TableContainer component={Paper} >
+            <Table>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Browser Owner</TableCell><TableCell>Server Owner</TableCell><TableCell>Server Game</TableCell><TableCell>Game Version</TableCell><TableCell>Actions</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {browserComponents}
+                </TableBody>
+            </Table>
+        </TableContainer>
+        <Box paddingTop={2}>
+            <ActionItem variant={'contained'} action={{ name: 'Create Browser', args: schema, endpoint: '/browsers', requestType: 'post', }} onClick={() => { loadServers(api).then(({ status, data }) => setServers(data)).catch((reason) => console.log("Failed to load servers" + reason)) }} />
+        </Box>
+    </Box>
 }

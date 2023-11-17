@@ -1,9 +1,7 @@
 import { AxiosInstance } from "axios"
 import { ActionGroup, ActionInfo, ActionItem, actionIdentifierContext, api, apiAuthenticatedContext, loadActions } from "./common"
 import React, { Context, Dispatch, createContext, useContext, useEffect, useState } from "react"
-import { TableRow, TableCell, Chip, Button, ButtonGroup, Popover, Paper, Table, TableContainer, TableHead, TableBody } from "@mui/material"
-import Form from '@rjsf/mui';
-import validator from '@rjsf/validator-ajv8';
+import { TableRow, TableCell, Chip, Button, ButtonGroup, Popover, Paper, Table, TableContainer, TableHead, TableBody, Box } from "@mui/material"
 import { ServerInfo } from "./interfaces"
 
 
@@ -34,7 +32,7 @@ function ServerItem(props: { server_info: ServerInfo }) {
                 <TableCell>{props.server_info.domain}</TableCell>
                 <TableCell>{props.server_info.ports.map((port, index, array) => { return <Chip label={`${port.number}/${port.protocol}`} /> })}</TableCell>
                 <TableCell>
-                    <ActionGroup actions={actions} identifierSubstring="server_id"/>
+                    <ActionGroup actions={actions} identifierSubstring="server_id" />
                 </TableCell>
             </TableRow>
         </actionIdentifierContext.Provider>
@@ -45,8 +43,6 @@ function ServerItem(props: { server_info: ServerInfo }) {
 export default function ServersBoard() {
     const [servers, setServers] = useState([]);
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
-    const [form, setForm] = useState(false);
-    const [formData, setFormData] = useState({})
     const [images, setImages] = useState([])
 
     let schema = {
@@ -87,8 +83,8 @@ export default function ServersBoard() {
                     }
                 }
             )
-        }
-    
+    }
+
 
     useEffect(() => {
         handleServers()
@@ -115,55 +111,40 @@ export default function ServersBoard() {
         return () => { clearInterval(interval) }
     }, [apiAuthenticated])
 
-    function handleSubmit() {
-        let url = `servers`
-        api.post(url, formData)
-
-        setForm(false)
-        setFormData(null)
-    }
-
-    function onFormChange(args) {
-        setFormData(args.formData)
-    }
 
 
-    return (<>
-        <TableContainer component={Paper}>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Owner</TableCell>
-                        <TableCell>Server</TableCell>
-                        <TableCell>Version</TableCell>
-                        <TableCell>Domain</TableCell>
-                        <TableCell>Ports</TableCell>
-                        <TableCell>Actions</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
+    return (
+        <Box padding={4}>
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Owner</TableCell>
+                            <TableCell>Server</TableCell>
+                            <TableCell>Version</TableCell>
+                            <TableCell>Domain</TableCell>
+                            <TableCell>Ports</TableCell>
+                            <TableCell>Actions</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
 
-                    <serverActionsContext.Provider value={loadActions(api, '/servers/{server_id}')}>
-                        {
-                            servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
-                                (value: ServerInfo, index: number, array) => {
-                                    return <ServerItem server_info={value} />
-                                }
-                            )
-                        }
-                    </serverActionsContext.Provider>
-                </TableBody>
-            </Table>
-            <Popover 
-            onClose={() => { setForm(false); setFormData({});}}
-            id='root'
-            open={form}
-        >
-            <Form validator={validator} schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
-        </Popover>
-        </TableContainer>
-        <Button variant="contained" onClick={() => { setForm(true) }}>Create Server</Button>
-    </>
+                        <serverActionsContext.Provider value={loadActions(api, '/servers/{server_id}')}>
+                            {
+                                servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
+                                    (value: ServerInfo, index: number, array) => {
+                                        return <ServerItem server_info={value} />
+                                    }
+                                )
+                            }
+                        </serverActionsContext.Provider>
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <Box marginTop={2}>
+                <ActionItem variant="contained" action={{ name: "Create Server", args: schema, requestType: 'post', endpoint: '/servers' }} />
+            </Box>
+        </Box>
     );
 }
 

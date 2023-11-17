@@ -1,68 +1,88 @@
-import { Box, Typography, Paper, Tabs, Tab, ThemeProvider} from "@mui/material";
+import { Box, Typography, Paper, Tabs, Tab, ThemeProvider, Drawer, List, ListItem, ListItemButton, ListItemText, SwipeableDrawer, ListItemIcon, IconButton, FormGroup, FormControlLabel, AppBar, Toolbar, Icon } from "@mui/material";
 import React from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { defaultTheme, ApiWrapper } from "./src/common";
 import { LoginPage } from "./src/login";
 import ServersBoard from "./src/servers";
+import MenuIcon from '@mui/icons-material/Menu';
+import StorageIcon from '@mui/icons-material/Storage';
+import WebIcon from '@mui/icons-material/Web';
+import Person3Icon from '@mui/icons-material/Person3';
 import { UsersPage } from "./src/users";
 import { BrowsersPage } from "./src/browsers";
 import { SignupPage } from "./src/signup";
 
-function a11yProps(index: number) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
+
+function Menu(props: { children }) {
+  const [open, setOpen] = React.useState(false);
+
+  const toggleDrawer = (newOpen: boolean) => () => {
+    setOpen(newOpen);
   };
-}
-
-function CustomTabPanel(props) {
-  const { children, value, index, ...other } = props;
-
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
 
-function Menu() {
-   const [value, setValue] = React.useState(0);
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
+    <Box component={Paper} width='100%' height='100%'>
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{ mr: 2 }}
+            onClick={() => { setOpen(true) }}
+          >
+            <MenuIcon />
+          </IconButton>
+        </Toolbar>
+      </AppBar>
+      <SwipeableDrawer
+        onClose={toggleDrawer(false)}
+        onOpen={toggleDrawer(true)}
+        disableSwipeToOpen={false}
+        ModalProps={
+          {
+            keepMounted: true,
+          }
+        }
+        open={open}
+        sx={{ minWidth: 'max-content' }}
+      >
+        <List>
+          <ListItem key="Servers">
+            <ListItemButton href='/servers'>
+              <ListItemIcon>
+                <StorageIcon />
+              </ListItemIcon>
+              <ListItemText primary={'Servers'} />
+            </ListItemButton>
+          </ListItem>
+          <ListItem key="Users" >
+            <ListItemButton href='/users'>
+              <ListItemIcon>
+                <Person3Icon />
+              </ListItemIcon>
+              <ListItemText primary={'Users'} />
+            </ListItemButton>
+          </ListItem>
+          <ListItem key="Browsers">
+            <ListItemButton href='/browsers'>
+              <ListItemIcon >
+                <WebIcon />
+              </ListItemIcon>
+              <ListItemText primary={'Browsers'} />
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </SwipeableDrawer>
 
-  return (
-      <Box sx={{ width: '100%' }} component={Paper} >
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }} >
-          <Tabs value={value} onChange={handleChange} aria-label="basic tabs example" sx={{ width: '100%', alignItems: 'center' }} >
-            <Tab label="Servers" {...a11yProps(0)} sx={{ width: '100%', justifyContent: 'center', alignSelf: 'center' }} />
-            <Tab label="Users" {...a11yProps(1)} sx={{ width: '100%', justifyContent: 'center', alignSelf: 'center' }} />
-            <Tab label="Browsers" {...a11yProps(2)} sx={{ width: '100%', justifyContent: 'center', alignSelf: 'center' }} />
-          </Tabs>
-        </Box>
-        <CustomTabPanel value={value} index={0}>
-          <ServersBoard/>
-        </CustomTabPanel>
-        <CustomTabPanel value={value} index={1}>
-          <UsersPage/>
-        </CustomTabPanel>
-        <CustomTabPanel value={value} index={2}>
-          <BrowsersPage/>
-        </CustomTabPanel>
-      </Box>
+
+      {props.children}
+    </Box>
 
   )
 }
+
 // Function to obtain the token
 
 export default function App() {
@@ -70,16 +90,19 @@ export default function App() {
     <ThemeProvider theme={defaultTheme}>
       <BrowserRouter>
         <ApiWrapper>
-
+          <Menu>
             <Routes>
-              <Route index element={<Menu />} />
               <Route path='login' element={<LoginPage />} />
-              <Route path='signup' element={<SignupPage/>} />
+              <Route path='signup' element={<SignupPage />} />
+              <Route path='servers' element={<ServersBoard />} />
+              <Route path='users' element={<UsersPage />} />
+              <Route path='browsers' element={<BrowsersPage />} />
+              <Route index element={<Navigate to='/servers' />} />
 
             </Routes>
-          </ApiWrapper>
+          </Menu>
+        </ApiWrapper>
       </BrowserRouter>
-      
     </ThemeProvider>
   )
 }

@@ -1,7 +1,7 @@
-import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip } from "@mui/material"
+import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Paper, TableBody, Chip, Modal, Box } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect, Context, createContext } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, loadApiDoc, api, ActionInfo, loadActions, ActionGroup, actionIdentifierContext } from "./common"
+import { apiAuthenticatedContext, loadApiDoc, api, ActionInfo, loadActions, ActionGroup, actionIdentifierContext, ActionItem } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { User } from './interfaces'
 
@@ -17,7 +17,7 @@ function UserItem(p: { user: User }) {
             <TableCell>{user.username}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.permissions.map((value, index, array) => { return <Chip label={value} /> })}</TableCell>
-            <TableCell><ActionGroup actions={userActions} identifierSubstring="username"/></TableCell>
+            <TableCell><ActionGroup actions={userActions} identifierSubstring="username" /></TableCell>
         </TableRow>
     )
 }
@@ -26,23 +26,7 @@ export function UsersPage({ }) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [users, setUsers]: [User[], Dispatch<User[]>] = useState([])
 
-    const [form, setForm] = useState(false);
-    const [formData, setFormData] = useState({})
-
-
     const schema = loadApiDoc(api, '/users', 'post')
-
-    function handleSubmit() {
-        let url = `users`
-        api.post(url, formData)
-
-        setForm(false)
-        setFormData(null)
-    }
-
-    function onFormChange(args) {
-        setFormData(args.formData)
-    }
 
     useEffect(() => {
         if (!apiAuthenticated) {
@@ -88,31 +72,26 @@ export function UsersPage({ }) {
         userComponents.push(<actionIdentifierContext.Provider value={user.username}><UserItem user={user} /></actionIdentifierContext.Provider>)
     }
 
-    return <TableContainer component={Paper} >
-        <Table>
-            <TableHead>
-                <TableRow>
-                    <TableCell>Username</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Permissions</TableCell>
-                    <TableCell>Actions</TableCell>
-                </TableRow>
-            </TableHead>
-            <TableBody>
-                <UserActionsContext.Provider value={loadActions(api, '/users/{username}')}>
-                    {userComponents}
-                </UserActionsContext.Provider>
-            </TableBody>
-        </Table>
-        <Button variant="contained" onClick={() => { setForm(true) }}>
-            Create User
-        </Button>
-        <Popover
-            onClose={() => { setForm(false); setFormData({}); }}
-            id='root'
-            open={form}
-        >
-            <Form validator={validator} schema={schema} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
-        </Popover>
-    </TableContainer>
+    return <Box padding={4}>
+        <TableContainer component={Paper}>
+            <Table>
+                <TableHead>
+                    <TableRow>
+                        <TableCell>Username</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell>Permissions</TableCell>
+                        <TableCell>Actions</TableCell>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    <UserActionsContext.Provider value={loadActions(api, '/users/{username}')}>
+                        {userComponents}
+                    </UserActionsContext.Provider>
+                </TableBody>
+            </Table>
+        </TableContainer>
+        <Box marginTop={2}>
+            <ActionItem action={{ name: 'Invite User', args: schema, endpoint: '/users', requestType: 'post' }} variant='contained' />
+        </Box>
+    </Box>
 }
