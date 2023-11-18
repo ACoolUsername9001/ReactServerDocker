@@ -1,7 +1,7 @@
-import { Box, Typography, Paper, Tabs, Tab, ThemeProvider, Drawer, List, ListItem, ListItemButton, ListItemText, SwipeableDrawer, ListItemIcon, IconButton, FormGroup, FormControlLabel, AppBar, Toolbar, Icon } from "@mui/material";
+import { Box, Typography, Paper, Tabs, Tab, ThemeProvider, Drawer, List, ListItem, ListItemButton, ListItemText, SwipeableDrawer, ListItemIcon, IconButton, FormGroup, FormControlLabel, AppBar, Toolbar, Icon, PaletteMode, createTheme, useMediaQuery, useTheme } from "@mui/material";
 import React from "react";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { defaultTheme, ApiWrapper } from "./src/common";
+import { ApiWrapper, getDesignTokens } from "./src/common";
 import { LoginPage } from "./src/login";
 import ServersBoard from "./src/servers";
 import MenuIcon from '@mui/icons-material/Menu';
@@ -11,14 +11,19 @@ import Person3Icon from '@mui/icons-material/Person3';
 import { UsersPage } from "./src/users";
 import { BrowsersPage } from "./src/browsers";
 import { SignupPage } from "./src/signup";
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
+const ColorModeContext = React.createContext({ toggleColorMode: () => {} });
 
-function Menu(props: { children }) {
+function Menu(props: { children, setMode }) {
   const [open, setOpen] = React.useState(false);
-
+  const theme = useTheme();
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
   };
+  const colorMode = React.useContext(ColorModeContext);
+
   return (
 
     <Box component={Paper} width='100%' height='100%'>
@@ -33,6 +38,10 @@ function Menu(props: { children }) {
             onClick={() => { setOpen(true) }}
           >
             <MenuIcon />
+          </IconButton>
+          <Box component="div" sx={{ flexGrow: 1 }}/>
+          <IconButton size='large' edge='end' color='inherit' aria-label="menu" sx={{ mr: 2 }} onClick={colorMode.toggleColorMode}>
+            {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
         </Toolbar>
       </AppBar>
@@ -83,14 +92,28 @@ function Menu(props: { children }) {
   )
 }
 
-// Function to obtain the token
-
 export default function App() {
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const [mode, setMode] = React.useState<PaletteMode>(prefersDarkMode? 'dark': 'light');
+  const colorMode = React.useMemo(
+    () => ({
+      toggleColorMode: () => {
+        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+      },
+    }),
+    [],
+  );
+
+
+  
+  const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
+
   return (
-    <ThemeProvider theme={defaultTheme}>
+    <ColorModeContext.Provider value={colorMode}>
+    <ThemeProvider theme={theme}>
       <BrowserRouter>
         <ApiWrapper>
-          <Menu>
+          <Menu setMode={setMode}>
             <Routes>
               <Route path='login' element={<LoginPage />} />
               <Route path='signup' element={<SignupPage />} />
@@ -104,5 +127,6 @@ export default function App() {
         </ApiWrapper>
       </BrowserRouter>
     </ThemeProvider>
+    </ColorModeContext.Provider>
   )
 }

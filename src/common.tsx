@@ -2,9 +2,10 @@ import axios, { AxiosInstance } from "axios";
 import React, { Context, Dispatch, createContext, useContext, useState } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import Cookies from 'js-cookie'
-import { Box, Button, ButtonGroup, ButtonOwnProps, ButtonPropsVariantOverrides, Modal, createTheme } from "@mui/material";
+import { Box, Button, ButtonGroup, ButtonOwnProps, ButtonPropsVariantOverrides, Modal, PaletteMode, Typography, createTheme } from "@mui/material";
 import { Form } from "@rjsf/mui";
 import validator from '@rjsf/validator-ajv8';
+import { amber, blue, deepOrange, grey } from "@mui/material/colors";
 
 
 export const apiAuthenticatedContext: Context<[boolean, Dispatch<boolean>]> = createContext(null)
@@ -16,24 +17,47 @@ export const formModalStyle = {
     left: '50%',
     transform: 'translate(-50%, -50%)',
     width: '70%',
-    bgcolor: '#191919',
+    bgcolor: 'background.paper',
     p: 4,
     borderRadius: 3,
 }
 
-
-export const defaultTheme = createTheme({
+export const getDesignTokens = (mode: PaletteMode) => ({
     palette: {
-        mode: 'dark'
+      mode,
+      ...(mode === 'light'
+        ? {
+            // palette values for light mode
+            primary: blue,
+            divider: blue[200],
+            text: {
+              primary: grey[900],
+              secondary: grey[800],
+            },
+          }
+        : {
+            // palette values for dark mode
+            primary: grey,
+            divider: grey[700],
+            background: {
+              default: grey[900],
+              paper: grey[900],
+            },
+            text: {
+              primary: '#fff',
+              secondary: grey[500],
+            },
+          }),
     },
     components: {
         MuiTypography: {
             defaultProps: {
-                color: '#fff'
+                color: 'text.primary'
             }
-        }
+        },
     }
-});
+  });
+
 
 export const api: AxiosInstance = axios.create({
     baseURL: 'https://api.games.acooldomain.co',
