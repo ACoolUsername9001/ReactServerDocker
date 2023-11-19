@@ -15,7 +15,7 @@ import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import Cookies from 'js-cookie'
 
-const ColorModeContext = React.createContext({ toggleColorMode: () => {} });
+const ColorModeContext = React.createContext({ toggleColorMode: () => { } });
 
 function Menu(props: { children, setMode }) {
   const [open, setOpen] = React.useState(false);
@@ -40,7 +40,7 @@ function Menu(props: { children, setMode }) {
           >
             <MenuIcon />
           </IconButton>
-          <Box component="div" sx={{ flexGrow: 1 }}/>
+          <Box component="div" sx={{ flexGrow: 1 }} />
           <IconButton size='large' edge='end' color='inherit' aria-label="menu" sx={{ mr: 2 }} onClick={colorMode.toggleColorMode}>
             {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
@@ -96,8 +96,8 @@ function Menu(props: { children, setMode }) {
 export default function App() {
   let themeName = Cookies.get('theme')
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  if (!themeName){
-    themeName = prefersDarkMode? 'dark': 'light'
+  if (!themeName) {
+    themeName = prefersDarkMode ? 'dark' : 'light'
   }
   const [mode, setMode] = React.useState<PaletteMode>(themeName);
   const colorMode = React.useMemo(
@@ -109,35 +109,35 @@ export default function App() {
           return mode
         });
 
-        
+
       },
     }),
     [],
   );
 
 
-  
+
   const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
   return (
     <ColorModeContext.Provider value={colorMode}>
-    <ThemeProvider theme={theme}>
-      <BrowserRouter>
-        <ApiWrapper>
-          <Menu setMode={setMode}>
-            <Routes>
-              <Route path='login' element={<LoginPage />} />
-              <Route path='signup' element={<SignupPage />} />
-              <Route path='servers' element={<ServersBoard />} />
-              <Route path='users' element={<UsersPage />} />
-              <Route path='browsers' element={<BrowsersPage />} />
-              <Route index element={<Navigate to='/servers' />} />
+      <ThemeProvider theme={theme}>
+        <BrowserRouter>
+          <ApiWrapper>
+            <Menu setMode={setMode}>
+              <Routes>
+                <Route path='login' element={<LoginPage />} />
+                <Route path='signup' element={<SignupPage />} />
+                <Route path='servers' element={<ServersBoard />} />
+                <Route path='users' element={<UsersPage />} />
+                <Route path='browsers' element={<BrowsersPage />} />
+                <Route index element={<Navigate to='/servers' />} />
 
-            </Routes>
-          </Menu>
-        </ApiWrapper>
-      </BrowserRouter>
-    </ThemeProvider>
+              </Routes>
+            </Menu>
+          </ApiWrapper>
+        </BrowserRouter>
+      </ThemeProvider>
     </ColorModeContext.Provider>
   )
 }

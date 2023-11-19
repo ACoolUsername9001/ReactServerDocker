@@ -1,7 +1,7 @@
 import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Paper, TableBody, Chip, Modal, Box } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect, Context, createContext } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, loadApiDoc, api, ActionInfo, loadActions, ActionGroup, actionIdentifierContext, ActionItem } from "./common"
+import { apiAuthenticatedContext, loadApiDoc, api, ActionInfo, loadActions, ActionGroup, actionIdentifierContext, ActionItem, DataTable } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { User } from './interfaces'
 
@@ -72,26 +72,9 @@ export function UsersPage({ }) {
         userComponents.push(<actionIdentifierContext.Provider value={user.username}><UserItem user={user} /></actionIdentifierContext.Provider>)
     }
 
-    return <Box padding={4}>
-        <TableContainer component={Paper}>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Username</TableCell>
-                        <TableCell>Email</TableCell>
-                        <TableCell>Permissions</TableCell>
-                        <TableCell>Actions</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    <UserActionsContext.Provider value={loadActions(api, '/users/{username}')}>
-                        {userComponents}
-                    </UserActionsContext.Provider>
-                </TableBody>
-            </Table>
-        </TableContainer>
-        <Box marginTop={2}>
-            <ActionItem action={{ name: 'Invite User', args: schema, endpoint: '/users', requestType: 'post' }} variant='contained' />
-        </Box>
-    </Box>
+    return <DataTable headers={['Username', 'Email', 'Permissions', 'Actions']} actionInfo={{ name: 'Invite User', args: schema, endpoint: '/users', requestType: 'post' }}>
+        <UserActionsContext.Provider value={loadActions(api, '/users/{username}')}>
+            {userComponents}
+        </UserActionsContext.Provider>
+    </DataTable>
 }

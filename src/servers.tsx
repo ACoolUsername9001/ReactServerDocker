@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios"
-import { ActionGroup, ActionInfo, ActionItem, actionIdentifierContext, api, apiAuthenticatedContext, loadActions } from "./common"
+import { ActionGroup, ActionInfo, ActionItem, DataTable, actionIdentifierContext, api, apiAuthenticatedContext, loadActions } from "./common"
 import React, { Context, Dispatch, createContext, useContext, useEffect, useState } from "react"
 import { TableRow, TableCell, Chip, Button, ButtonGroup, Popover, Paper, Table, TableContainer, TableHead, TableBody, Box } from "@mui/material"
 import { ServerInfo } from "./interfaces"
@@ -88,22 +88,6 @@ export default function ServersBoard() {
 
     useEffect(() => {
         handleServers()
-        api.get('/images').then((value) => {
-            setImages(value.data)
-        }).catch(
-            (error) => {
-                console.log('Failed to get images: ' + error);
-                if (error.response) {
-                    if (error.response.status == 401) {
-                        setApiAuthenticated(false)
-                    }
-                    else if (error.response.status == 403) {
-                        setApiAuthenticated(false)
-                    }
-                }
-            }
-        )
-
         const interval = setInterval(() => {
             handleServers()
         }, 5000
@@ -114,37 +98,33 @@ export default function ServersBoard() {
 
 
     return (
-        <Box padding={4}>
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Owner</TableCell>
-                            <TableCell>Server</TableCell>
-                            <TableCell>Version</TableCell>
-                            <TableCell>Domain</TableCell>
-                            <TableCell>Ports</TableCell>
-                            <TableCell>Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-
-                        <serverActionsContext.Provider value={loadActions(api, '/servers/{server_id}')}>
-                            {
-                                servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
-                                    (value: ServerInfo, index: number, array) => {
-                                        return <ServerItem server_info={value} />
-                                    }
-                                )
-                            }
-                        </serverActionsContext.Provider>
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <Box marginTop={2}>
-                <ActionItem variant="contained" action={{ name: "Create Server", args: schema, requestType: 'post', endpoint: '/servers' }} />
-            </Box>
-        </Box>
+        <DataTable headers={['Owner', 'Server', 'Version', 'Domain', 'Ports', 'Actions']} actionInfo={{ name: 'Create Server', args: schema, endpoint: '/servers', requestType: 'post' }} actionHook={() => {
+            api.get('/images').then((value) => {
+                setImages(value.data)
+            }).catch(
+                (error) => {
+                    console.log('Failed to get images: ' + error);
+                    if (error.response) {
+                        if (error.response.status == 401) {
+                            setApiAuthenticated(false)
+                        }
+                        else if (error.response.status == 403) {
+                            setApiAuthenticated(false)
+                        }
+                    }
+                }
+            )
+        }}>
+            <serverActionsContext.Provider value={loadActions(api, '/servers/{server_id}')}>
+                {
+                    servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
+                        (value: ServerInfo, index: number, array) => {
+                            return <ServerItem server_info={value} />
+                        }
+                    )
+                }
+            </serverActionsContext.Provider>
+        </DataTable>
     );
 }
 

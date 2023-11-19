@@ -1,7 +1,7 @@
 import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip, Link, ButtonGroup, Modal, Box } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect, createContext } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, loadApiDoc, api, ActionItem, formModalStyle } from "./common"
+import { apiAuthenticatedContext, loadApiDoc, api, ActionItem, formModalStyle, DataTable } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { Browser, ServerInfo } from "./interfaces";
 import { loadServers } from "./servers";
@@ -124,21 +124,7 @@ export function BrowsersPage({ }) {
             </browserContext.Provider>
         )
     }
-    return <Box padding={4}>
-        <TableContainer component={Paper} >
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Browser Owner</TableCell><TableCell>Server Owner</TableCell><TableCell>Server Game</TableCell><TableCell>Game Version</TableCell><TableCell>Actions</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {browserComponents}
-                </TableBody>
-            </Table>
-        </TableContainer>
-        <Box paddingTop={2}>
-            <ActionItem variant={'contained'} action={{ name: 'Create Browser', args: schema, endpoint: '/browsers', requestType: 'post', }} onClick={() => { loadServers(api).then(({ status, data }) => setServers(data)).catch((reason) => console.log("Failed to load servers" + reason)) }} />
-        </Box>
-    </Box>
+    return <DataTable headers={['Browser Owner', 'Server Owner', 'Server Game', 'Game Version', 'Actions']} actionInfo={{ name: 'Create Browser', args: schema, endpoint: '/browsers', requestType: 'post', }} actionHook={() => { loadServers(api).then(({ status, data }) => setServers(data)).catch((reason) => console.log("Failed to load servers" + reason)) }}>
+        {browserComponents}
+    </DataTable>
 }

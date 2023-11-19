@@ -2,10 +2,12 @@ import axios, { AxiosInstance } from "axios";
 import React, { Context, Dispatch, createContext, useContext, useState } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import Cookies from 'js-cookie'
-import { Box, Button, ButtonGroup, ButtonOwnProps, ButtonPropsVariantOverrides, Modal, PaletteMode, Typography, createTheme } from "@mui/material";
+import { Box, Button, ButtonGroup, ButtonOwnProps, ButtonPropsVariantOverrides, Modal, PaletteMode, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, createTheme } from "@mui/material";
 import { Form } from "@rjsf/mui";
 import validator from '@rjsf/validator-ajv8';
 import { amber, blue, deepOrange, grey } from "@mui/material/colors";
+import { ServerInfo } from "./interfaces";
+import servers from "./servers";
 
 
 export const apiAuthenticatedContext: Context<[boolean, Dispatch<boolean>]> = createContext(null)
@@ -24,30 +26,35 @@ export const formModalStyle = {
 
 export const getDesignTokens = (mode: PaletteMode) => ({
     palette: {
-      mode,
-      ...(mode === 'light'
-        ? {
-            // palette values for light mode
-            primary: blue,
-            divider: blue[200],
-            text: {
-              primary: grey[900],
-              secondary: grey[800],
-            },
-          }
-        : {
-            // palette values for dark mode
-            primary: grey,
-            divider: grey[700],
-            background: {
-              default: grey[900],
-              paper: grey[900],
-            },
-            text: {
-              primary: '#fff',
-              secondary: grey[500],
-            },
-          }),
+        mode,
+        ...(mode === 'light'
+            ? {
+                // palette values for light mode
+                primary: blue,
+                divider: blue[200],
+                background: {
+                    default: grey[200],
+                    light: grey[100],
+                },
+                text: {
+                    primary: grey[900],
+                    secondary: grey[800],
+                },
+            }
+            : {
+                // palette values for dark mode
+                primary: grey,
+                divider: grey[700],
+                background: {
+                    default: grey[900],
+                    paper: grey[900],
+                    light: grey[700],
+                },
+                text: {
+                    primary: '#fff',
+                    secondary: grey[500],
+                },
+            }),
     },
     components: {
         MuiTypography: {
@@ -56,7 +63,7 @@ export const getDesignTokens = (mode: PaletteMode) => ({
             }
         },
     }
-  });
+});
 
 
 export const api: AxiosInstance = axios.create({
@@ -215,3 +222,25 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
     )
 }
 
+
+
+export function DataTable(props: { headers: string[], children, actionInfo?: ActionInfo, actionHook?: Function }) {
+    const { children, headers, actionInfo, actionHook } = props
+    return <Box padding={4}>
+        <TableContainer component={Paper}>
+            <Table>
+                <TableHead sx={{ backgroundColor: 'background.light' }}>
+                    <TableRow>
+                        {headers.map((value, index, array) => (<TableCell>{value}</TableCell>))}
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {children}
+                </TableBody>
+            </Table>
+        </TableContainer>
+        {(actionInfo && <Box marginTop={2}>
+            <ActionItem variant="contained" action={actionInfo} onClick={actionHook} />
+        </Box>)}
+    </Box>
+}
