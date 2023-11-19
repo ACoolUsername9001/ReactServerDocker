@@ -27,7 +27,7 @@ function Menu(props: { children, setMode }) {
 
   return (
 
-    <Box component={Paper} width='100%' height='100%'>
+    <Box component={Paper} width='100vw' height='100vh' overflow={'clip'}>
       <AppBar position="static">
         <Toolbar>
           <IconButton
@@ -121,6 +121,7 @@ export default function App() {
 
   return (
     <ColorModeContext.Provider value={colorMode}>
+      <Box height={'100vh'} width={'100vw'}>
       <ThemeProvider theme={theme}>
         <BrowserRouter>
           <ApiWrapper>
@@ -138,6 +139,7 @@ export default function App() {
           </ApiWrapper>
         </BrowserRouter>
       </ThemeProvider>
+  </Box>
     </ColorModeContext.Provider>
   )
 }

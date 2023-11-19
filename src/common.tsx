@@ -226,12 +226,12 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
 
 export function DataTable(props: { headers: string[], children, actionInfo?: ActionInfo, actionHook?: Function }) {
     const { children, headers, actionInfo, actionHook } = props
-    return <Box padding={4}>
-        <TableContainer component={Paper}>
-            <Table>
-                <TableHead sx={{ backgroundColor: 'background.light' }}>
-                    <TableRow>
-                        {headers.map((value, index, array) => (<TableCell>{value}</TableCell>))}
+    return <Box padding={4} height={`100vh`}>
+        <TableContainer component={Paper} sx={{maxHeight: '80%'}}>
+            <Table stickyHeader>
+                <TableHead>
+                    <TableRow sx={{ backgroundColor: 'background.light' }}>
+                        {headers.map((value, index, array) => (<TableCell sx={{ backgroundColor: 'background.light' }}>{value}</TableCell>))}
                     </TableRow>
                 </TableHead>
                 <TableBody>
