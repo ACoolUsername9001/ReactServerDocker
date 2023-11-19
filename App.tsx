@@ -13,6 +13,7 @@ import { BrowsersPage } from "./src/browsers";
 import { SignupPage } from "./src/signup";
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import Cookies from 'js-cookie'
 
 const ColorModeContext = React.createContext({ toggleColorMode: () => {} });
 
@@ -93,12 +94,22 @@ function Menu(props: { children, setMode }) {
 }
 
 export default function App() {
+  let themeName = Cookies.get('theme')
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const [mode, setMode] = React.useState<PaletteMode>(prefersDarkMode? 'dark': 'light');
+  if (!themeName){
+    themeName = prefersDarkMode? 'dark': 'light'
+  }
+  const [mode, setMode] = React.useState<PaletteMode>(themeName);
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+        setMode((prevMode) => {
+          const mode = prevMode === 'light' ? 'dark' : 'light'
+          Cookies.set('theme', mode)
+          return mode
+        });
+
+        
       },
     }),
     [],
