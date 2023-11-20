@@ -27,7 +27,7 @@ function Menu(props: { children, setMode }) {
 
   return (
 
-    <Box component={Paper} width='100vw' height='100vh' overflow={'clip'}>
+    <Box component={Paper} width='100vw' height='100vh' overflow={'clip'} maxHeight='-webkit-fill-available'>
       <AppBar position="static">
         <Toolbar>
           <IconButton
