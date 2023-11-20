@@ -226,8 +226,8 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
 
 export function DataTable(props: { headers: string[], children, actionInfo?: ActionInfo, actionHook?: Function }) {
     const { children, headers, actionInfo, actionHook } = props
-    return <Box padding={4} height={`100vh`}>
-        <TableContainer component={Paper} sx={{maxHeight: '80%'}}>
+    return <Box padding={4}>
+        <TableContainer component={Paper} sx={{maxHeight: '70vh'}}>
             <Table stickyHeader>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: 'background.light' }}>
