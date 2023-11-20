@@ -121,7 +121,7 @@ export default function App() {
 
   return (
     <ColorModeContext.Provider value={colorMode}>
-      <Box height={'100vh'} width={'100vw'}>
+      <Box height={'100vh'} width={'100vw'} overflow='clip' maxHeight='-webkit-fill-available'>
       <ThemeProvider theme={theme}>
         <BrowserRouter>
           <ApiWrapper>
