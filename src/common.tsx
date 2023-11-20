@@ -226,7 +226,7 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
 
 export function DataTable(props: { headers: string[], children, actionInfo?: ActionInfo, actionHook?: Function }) {
     const { children, headers, actionInfo, actionHook } = props
-    return <Box padding={4} overflow="clip">
+    return <Box padding={4} overflow='clip'>
         <TableContainer component={Paper} sx={{maxHeight: '70vh'}}>
             <Table stickyHeader>
                 <TableHead>
@@ -239,7 +239,7 @@ export function DataTable(props: { headers: string[], children, actionInfo?: Act
                 </TableBody>
             </Table>
         </TableContainer>
-        {(actionInfo && <Box marginTop={2}>
+        {(actionInfo && <Box marginTop={2} overflow='clip'>
             <ActionItem variant="contained" action={actionInfo} onClick={actionHook} />
         </Box>)}
     </Box>
