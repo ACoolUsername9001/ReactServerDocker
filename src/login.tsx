@@ -1,5 +1,5 @@
 import { CssBaseline, Box, Typography, TextField, FormControlLabel, Checkbox, Container, Button } from "@mui/material";
-import React, { useContext } from "react";
+import React, { FormEventHandler, useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { api, apiAuthenticatedContext } from "./common";
 import Cookies from 'js-cookie'
@@ -26,10 +26,18 @@ export function LoginPage(props: {}) {
         return <Navigate to='/' />
     }
 
-    const handleSubmit = (event) => {
+    const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        fetchToken(data.get('username').toString(), data.get('password').toString(), Boolean(data.get('remember'))).then(
+        const usernameFormData: FormDataEntryValue | null = data.get('username');
+        const passwordFormData: FormDataEntryValue | null = data.get('password');
+        if (usernameFormData == null || passwordFormData == null){
+            return
+        }
+        const username: string = usernameFormData.toString();
+        const password: string = passwordFormData.toString();
+
+        fetchToken(username, password, Boolean(data.get('remember'))).then(
             (token) => {
                 api.defaults.headers.common.Authorization = `Bearer ${token}`;
 

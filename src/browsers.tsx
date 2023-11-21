@@ -1,12 +1,13 @@
 import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip, Link, ButtonGroup, Modal, Box } from "@mui/material"
-import React, { useContext, Dispatch, useState, useEffect, createContext } from "react"
+import React, { useContext, Dispatch, useState, useEffect, createContext, Context } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, loadApiDoc, api, ActionItem, formModalStyle, DataTable } from "./common"
+import { apiAuthenticatedContext, useApiDoc, api, ActionItem, formModalStyle, DataTable } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { Browser, ServerInfo } from "./interfaces";
 import { loadServers } from "./servers";
+import { JSONSchema7TypeName } from "json-schema";
 
-const browserContext = createContext(null)
+const browserContext: Context<Browser> = createContext({} as Browser)
 
 function BrowserActions() {
     const browser = useContext(browserContext)
@@ -15,9 +16,8 @@ function BrowserActions() {
         "properties": {
 
         },
-        "type": "object",
-        "required": [
-        ],
+        "type": ("object" as JSONSchema7TypeName),
+        "required": [],
         "title": "Stop Browser"
     }
 
@@ -50,8 +50,8 @@ function BrowserActions() {
 
 export function BrowsersPage({ }) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
-    const [browsers, setBrowsers]: [Browser[], Dispatch<Browser[]>] = useState([])
-    const [servers, setServers]: [ServerInfo[], Dispatch<ServerInfo[]>] = useState([])
+    const [browsers, setBrowsers]: [Browser[], Dispatch<Browser[]>] = useState([]as Browser[])
+    const [servers, setServers]: [ServerInfo[], Dispatch<ServerInfo[]>] = useState([] as ServerInfo[])
 
     let schema = {
         "properties": {

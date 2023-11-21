@@ -1,11 +1,11 @@
 import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Paper, TableBody, Chip, Modal, Box } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect, Context, createContext } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, loadApiDoc, api, ActionInfo, loadActions, ActionGroup, actionIdentifierContext, ActionItem, DataTable } from "./common"
+import { apiAuthenticatedContext, useApiDoc, api, ActionInfo, useActions, ActionGroup, actionIdentifierContext, ActionItem, DataTable } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { User } from './interfaces'
 
-const UserActionsContext: Context<ActionInfo[]> = createContext([])
+const UserActionsContext: Context<ActionInfo[]> = createContext([] as ActionInfo[])
 
 
 function UserItem(p: { user: User }) {
@@ -24,9 +24,9 @@ function UserItem(p: { user: User }) {
 
 export function UsersPage({ }) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
-    const [users, setUsers]: [User[], Dispatch<User[]>] = useState([])
+    const [users, setUsers]: [User[], Dispatch<User[]>] = useState([] as User[])
 
-    const schema = loadApiDoc(api, '/users', 'post')
+    const schema = useApiDoc(api, '/users', 'post')
 
     useEffect(() => {
         if (!apiAuthenticated) {
@@ -73,7 +73,7 @@ export function UsersPage({ }) {
     }
 
     return <DataTable headers={['Username', 'Email', 'Permissions', 'Actions']} actionInfo={{ name: 'Invite User', args: schema, endpoint: '/users', requestType: 'post' }}>
-        <UserActionsContext.Provider value={loadActions(api, '/users/{username}')}>
+        <UserActionsContext.Provider value={useActions(api, '/users/{username}')}>
             {userComponents}
         </UserActionsContext.Provider>
     </DataTable>

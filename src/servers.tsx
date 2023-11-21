@@ -1,8 +1,9 @@
 import { AxiosInstance } from "axios"
-import { ActionGroup, ActionInfo, ActionItem, DataTable, actionIdentifierContext, api, apiAuthenticatedContext, loadActions } from "./common"
+import { ActionGroup, ActionInfo, DataTable, actionIdentifierContext, api, apiAuthenticatedContext, useActions } from "./common"
 import React, { Context, Dispatch, createContext, useContext, useEffect, useState } from "react"
-import { TableRow, TableCell, Chip, Button, ButtonGroup, Popover, Paper, Table, TableContainer, TableHead, TableBody, Box } from "@mui/material"
-import { ServerInfo } from "./interfaces"
+import { TableRow, TableCell, Chip } from "@mui/material"
+import { ImageInfo, ServerInfo } from "./interfaces"
+import { JSONSchema7 } from "json-schema"
 
 
 
@@ -14,7 +15,7 @@ export async function loadServers(api: AxiosInstance): Promise<{ status: number,
     }
 }
 
-const serverActionsContext: Context<ActionInfo[]> = createContext([])
+const serverActionsContext: Context<ActionInfo[]> = createContext([] as ActionInfo[])
 
 
 function ServerItem(props: { server_info: ServerInfo }) {
@@ -41,11 +42,11 @@ function ServerItem(props: { server_info: ServerInfo }) {
 
 
 export default function ServersBoard() {
-    const [servers, setServers] = useState([]);
+    const [servers, setServers]: [ServerInfo[], Dispatch<ServerInfo[]>] = useState([] as ServerInfo[]);
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
-    const [images, setImages] = useState([])
+    const [images, setImages] = useState([] as ImageInfo[])
 
-    let schema = {
+    let schema: JSONSchema7 = {
         "properties": {
             "image_id": {
                 "type": "string",
@@ -115,7 +116,7 @@ export default function ServersBoard() {
                 }
             )
         }}>
-            <serverActionsContext.Provider value={loadActions(api, '/servers/{server_id}')}>
+            <serverActionsContext.Provider value={useActions(api, '/servers/{server_id}')}>
                 {
                     servers.sort((s1: ServerInfo, s2: ServerInfo) => { return s1.id_ < s2.id_ ? 0 : 1 }).map(
                         (value: ServerInfo, index: number, array) => {

@@ -1,5 +1,5 @@
 import { CssBaseline, Box, Typography, TextField, FormControlLabel, Checkbox, Container, Button } from "@mui/material";
-import React, { useContext } from "react";
+import React, { FormEvent, FormEventHandler, useContext } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { api, apiAuthenticatedContext } from "./common";
 import Cookies from 'js-cookie'
@@ -23,16 +23,25 @@ export function SignupPage(props: {}) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [searchParam, setSearchParam] = useSearchParams();
     const token = searchParam.get('token');
+    if (token == null){
+        return <Navigate to='/' />
+    }
 
     if (apiAuthenticated) {
         return <Navigate to='/' />
     }
 
-    const handleSubmit = (event) => {
+    const handleSubmit: FormEventHandler<HTMLFormElement> = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-        const username = data.get('username').toString();
-        const password = data.get('password').toString()
+        const usernameFormData: FormDataEntryValue | null = data.get('username');
+        const passwordFormData: FormDataEntryValue | null = data.get('password');
+        if (usernameFormData == null || passwordFormData == null){
+            return
+        }
+        const username: string = usernameFormData.toString();
+        const password: string = passwordFormData.toString();
+
 
         signUp(username, password, token).then(
             () => {

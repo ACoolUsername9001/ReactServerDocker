@@ -1,3 +1,4 @@
+import { JSONSchema6, JSONSchema7 } from "json-schema"
 
 export interface Port {
     number: number
@@ -6,6 +7,7 @@ export interface Port {
 
 
 export interface ImageInfo {
+    id_: string
     name: string
     version: string
     ports: Port[]
@@ -36,4 +38,18 @@ export interface Browser {
     url: string
     owner_id: string
     connected_to: ServerInfo
+}
+
+
+export interface OpenApiMethodSchema {
+    summary: string
+    requestBody: {content: Record<string, {schema: JSONSchema7}>}
+}
+
+
+export interface OpenAPISchema {
+    data: {
+        paths: Record<string, {get?: OpenApiMethodSchema, post?: OpenApiMethodSchema, delete?: OpenApiMethodSchema}>
+        components: {schema: Record<string, JSONSchema7>}
+    }
 }

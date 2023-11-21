@@ -1,23 +1,23 @@
-import { Box, Typography, Paper, Tabs, Tab, ThemeProvider, Drawer, List, ListItem, ListItemButton, ListItemText, SwipeableDrawer, ListItemIcon, IconButton, FormGroup, FormControlLabel, AppBar, Toolbar, Icon, PaletteMode, createTheme, useMediaQuery, useTheme } from "@mui/material";
-import React from "react";
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
-import { ApiWrapper, getDesignTokens } from "./src/common";
-import { LoginPage } from "./src/login";
-import ServersBoard from "./src/servers";
+import { Box, Paper, ThemeProvider, List, ListItem, ListItemButton, ListItemText, SwipeableDrawer, ListItemIcon, IconButton, AppBar, Toolbar, PaletteMode, createTheme, useMediaQuery, useTheme } from "@mui/material";
+import React, { Dispatch, ReactNode } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ApiWrapper, getDesignTokens } from "./common";
+import { LoginPage } from "./login";
+import ServersBoard from "./servers";
 import MenuIcon from '@mui/icons-material/Menu';
 import StorageIcon from '@mui/icons-material/Storage';
 import WebIcon from '@mui/icons-material/Web';
 import Person3Icon from '@mui/icons-material/Person3';
-import { UsersPage } from "./src/users";
-import { BrowsersPage } from "./src/browsers";
-import { SignupPage } from "./src/signup";
+import { UsersPage } from "./users";
+import { BrowsersPage } from "./browsers";
+import { SignupPage } from "./signup";
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import Cookies from 'js-cookie'
 
 const ColorModeContext = React.createContext({ toggleColorMode: () => { } });
 
-function Menu(props: { children, setMode }) {
+function Menu(props: { children: ReactNode, setMode: Dispatch<PaletteMode> }) {
   const [open, setOpen] = React.useState(false);
   const theme = useTheme();
   const toggleDrawer = (newOpen: boolean) => () => {
@@ -85,8 +85,6 @@ function Menu(props: { children, setMode }) {
           </ListItem>
         </List>
       </SwipeableDrawer>
-
-
       {props.children}
     </Box>
 
@@ -99,7 +97,7 @@ export default function App() {
   if (!themeName) {
     themeName = prefersDarkMode ? 'dark' : 'light'
   }
-  const [mode, setMode] = React.useState<PaletteMode>(themeName);
+  const [mode, setMode] = React.useState<PaletteMode>(themeName as PaletteMode);
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
@@ -121,7 +119,7 @@ export default function App() {
 
   return (
     <ColorModeContext.Provider value={colorMode}>
-      <Box height={'100svh'} width={'100vw'} overflow='clip' maxHeight='-webkit-fill-available'>
+      <Box height={'100vh'} width={'100vw'} overflow='clip' maxHeight='-webkit-fill-available'>
       <ThemeProvider theme={theme}>
         <BrowserRouter>
           <ApiWrapper>
@@ -133,7 +131,6 @@ export default function App() {
                 <Route path='users' element={<UsersPage />} />
                 <Route path='browsers' element={<BrowsersPage />} />
                 <Route index element={<Navigate to='/servers' />} />
-
               </Routes>
             </Menu>
           </ApiWrapper>
