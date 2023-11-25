@@ -1,15 +1,17 @@
 import axios, { AxiosInstance } from "axios";
-import React, { ChangeEvent, Context, Dispatch, ReactNode, createContext, useContext, useState } from "react";
+import React, { Context, Dispatch, ReactNode, createContext, useContext, useState } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import Cookies from 'js-cookie'
-import { Box, Button, ButtonGroup, ButtonOwnProps, ButtonPropsVariantOverrides, Modal, PaletteMode, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, createTheme } from "@mui/material";
+import { Box, Button, ButtonGroup, ButtonOwnProps, ButtonPropsVariantOverrides, Modal, PaletteMode, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, createTheme, TextField } from "@mui/material";
 import { Form } from "@rjsf/mui";
 import validator from '@rjsf/validator-ajv8';
-import { amber, blue, deepOrange, grey } from "@mui/material/colors";
-import { OpenAPISchema, OpenApiMethodSchema, ServerInfo } from "./interfaces";
+import { blue, grey } from "@mui/material/colors";
+import { OpenAPISchema } from "./interfaces";
 import { JSONSchema7 } from "json-schema";
 import { IChangeEvent } from "@rjsf/core";
-import { RJSFSchema } from "@rjsf/utils";
+import { RJSFSchema, WidgetProps } from "@rjsf/utils";
+
+// import TextWidget from '@rjsf/core/src/components/widgets/TextWidget';
 
 export const apiAuthenticatedContext: Context<[boolean, Dispatch<boolean>]> = createContext([false, (value: boolean) => {}] as [boolean, Dispatch<boolean>])
 
@@ -169,8 +171,38 @@ export function useActions(api: AxiosInstance, path_prefix: string): ActionInfo[
     }
 }
 
+interface Options{
+    label: string
+    const: string
+    }
 
 export const actionIdentifierContext: Context<string> = createContext('')
+
+function FetcherField(props: WidgetProps){
+    const jp = require('jsonpath')
+    const [options2, setOptions]: [Options[], Dispatch<Options[]>] = useState([] as Options[])
+    const {schema, registry, options, ...newProps} = props
+    const {SelectWidget} = registry.widgets
+
+    if (!schema.fetch_url){
+        return <TextField onChange={(event)=>(props.onChange(event.target.value))} value={props.value} label={props.label}/>
+    }
+    
+    if (options2.length == 0){
+        api.get(schema.fetch_url as string).then((event)=>{
+            let newOptions: Options[] = []
+            for (let response of event.data){
+                newOptions.push({
+                    const: jp.query(response, `$.${schema.fetch_key_path}`)[0], 
+                    label: jp.query(response, `$.${schema.fetch_display_path}`)[0],
+                })
+            }
+
+            setOptions(newOptions)
+        })
+    }
+    return <SelectWidget {...newProps} schema={{oneOf: options2}} registry={registry} options={{enumOptions: options2.map((value: Options)=>({label: value.label, value: value.const}))}}/>
+}
 
 
 export function ActionItem(p: { action: ActionInfo, identifierSubstring?: string, sx?: ButtonOwnProps, variant?: any, onClick?: Function }) {
@@ -217,7 +249,7 @@ export function ActionItem(p: { action: ActionInfo, identifierSubstring?: string
             open={form}
         >
             <Box sx={formModalStyle}>
-                <Form validator={validator} schema={p.action.args} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
+                <Form validator={validator} widgets={{TextWidget: FetcherField}} schema={p.action.args} onChange={onFormChange} formData={formData} onSubmit={handleSubmit} />
             </Box>
         </Modal>
     </>)

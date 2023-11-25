@@ -27,6 +27,7 @@ function ServerItem(props: { server_info: ServerInfo }) {
     return (
         <actionIdentifierContext.Provider value={props.server_info.id_}>
             <TableRow>
+                <TableCell>{props.server_info.nickname}</TableCell>
                 <TableCell>{props.server_info.user_id}</TableCell>
                 <TableCell>{props.server_info.image.name}</TableCell>
                 <TableCell>{props.server_info.image.version}</TableCell>
@@ -99,7 +100,7 @@ export default function ServersBoard() {
 
 
     return (
-        <DataTable headers={['Owner', 'Server', 'Version', 'Domain', 'Ports', 'Actions']} actionInfo={{ name: 'Create Server', args: schema, endpoint: '/servers', requestType: 'post' }} actionHook={() => {
+        <DataTable headers={['Nickname', 'Owner', 'Server', 'Version', 'Domain', 'Ports', 'Actions']} actionInfo={{ name: 'Create Server', args: schema, endpoint: '/servers', requestType: 'post' }} actionHook={() => {
             api.get('/images').then((value) => {
                 setImages(value.data)
             }).catch(

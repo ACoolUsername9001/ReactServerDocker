@@ -22,6 +22,7 @@ export interface ServerInfo {
     image: ImageInfo
     ports: Port[] | null
     domain: string
+    nickname?: string
 }
 
 

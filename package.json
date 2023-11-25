@@ -5,6 +5,7 @@
   "dependencies": {
     "@rjsf/core": "^5.14.2",
     "@rjsf/mui": "^5.14.2",
+    "@rjsf/utils": "^5.14.2",
     "@rjsf/validator-ajv8": "^5.14.2",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -17,6 +18,7 @@
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.6.2",
     "js-cookie": "^3.0.5",
+    "jsonpath": "^1.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-jsonschema-form": "^1.8.1",
