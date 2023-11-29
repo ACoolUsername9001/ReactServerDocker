@@ -77,10 +77,10 @@ export function BrowsersPage({ }) {
             (error) => {
                 console.log('Failed to get Browsers: ' + error);
                 if (error.response) {
-                    if (error.response.status == 401) {
+                    if (error.response.status === 401) {
                         setApiAuthenticated(false)
                     }
-                    else if (error.response.status == 403) {
+                    else if (error.response.status === 403) {
                         setApiAuthenticated(false)
                     }
                 }
@@ -92,10 +92,10 @@ export function BrowsersPage({ }) {
                 (error) => {
                     console.log('Failed to get Browsers: ' + error);
                     if (error.response) {
-                        if (error.response.status == 401) {
+                        if (error.response.status === 401) {
                             setApiAuthenticated(false)
                         }
-                        else if (error.response.status == 403) {
+                        else if (error.response.status === 403) {
                             setApiAuthenticated(false)
                         }
                     }

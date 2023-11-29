@@ -1,12 +1,12 @@
 import axios, { AxiosInstance } from "axios";
-import React, { Context, Dispatch, ReactNode, createContext, useContext, useState } from "react";
+import React, { Context, Dispatch, ReactNode, createContext, useContext, useMemo, useState } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import Cookies from 'js-cookie'
 import { Box, Button, ButtonGroup, ButtonOwnProps, ButtonPropsVariantOverrides, Modal, PaletteMode, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, createTheme, TextField } from "@mui/material";
 import { Form } from "@rjsf/mui";
 import validator from '@rjsf/validator-ajv8';
 import { blue, grey } from "@mui/material/colors";
-import { OpenAPISchema } from "./interfaces";
+import { OpenAPISchema, User } from "./interfaces";
 import { JSONSchema7 } from "json-schema";
 import { IChangeEvent } from "@rjsf/core";
 import { RJSFSchema, WidgetProps } from "@rjsf/utils";
@@ -95,7 +95,7 @@ export function ApiWrapper(p: { children: ReactNode}) {
     const path = useLocation()
     return (<apiAuthenticatedContext.Provider value={[apiAuthenticated, setApiAuthenticated]}>
         {children}
-        {!apiAuthenticated && (path.pathname != '/login' && path.pathname != '/signup') && <Navigate to='/login' />}
+        {!apiAuthenticated && (path.pathname !== '/login' && path.pathname !== '/signup') && <Navigate to='/login' />}
     </apiAuthenticatedContext.Provider>)
 }
 
@@ -103,28 +103,26 @@ export function ApiWrapper(p: { children: ReactNode}) {
 
 export function useApiDoc(api: AxiosInstance, path: string, method: 'get' | 'post' | 'delete') {
     const [apiRecord, setApiRecord] = useState(null as OpenAPISchema|null)
+    api.get('/openapi.json').then(
+        (value) => {
+            setApiRecord(value.data)
+        }
+    )
 
     if (apiRecord) {
-        const schema = apiRecord.data.paths[path][method]
+        const schema = apiRecord.paths[path][method]
         if (!schema){
             return
         }
 
-        let formSchema: JSONSchema7 = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: apiRecord.data.components, default: {} }
+        let formSchema: JSONSchema7 = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: apiRecord.components, default: {} }
         if (schema.requestBody) {
             formSchema = schema.requestBody.content['application/json'].schema
-            formSchema.definitions = apiRecord.data.components
+            formSchema.definitions = apiRecord.components
         }
 
         return JSON.parse(JSON.stringify(formSchema).replaceAll('#/components', '#/definitions'))
     }
-
-
-    api.get('/openapi.json').then(
-        (value) => {
-            setApiRecord(value)
-        }
-    )
 
 }
 
@@ -134,42 +132,49 @@ export interface ActionInfo {
     requestType: 'post' | 'get' | 'delete'
     endpoint: string
     args: {}
+    permissions?: string[]
+    response_action?: 'Ignore' | 'Browse'
 }
 
 
 export function useActions(api: AxiosInstance, path_prefix: string): ActionInfo[] {
-    const [openapi, setOpenApi]: [OpenAPISchema|null, Dispatch<OpenAPISchema>] = useState(null as OpenAPISchema|null)
+    const openapi: OpenAPISchema|null = useContext(OpenApiContext)
     let [actions, setActions]: [Record<string, ActionInfo[]>, Dispatch<Record<string, ActionInfo[]>>] = useState({})
 
     if (actions[path_prefix] && actions[path_prefix].length > 0) {
         return actions[path_prefix]
     }
     if (openapi === null) {
-        api.get('/openapi.json').then((value: OpenAPISchema) => {
-            setOpenApi(value)
-        }
-        )
         return []
     }
 
     let responseActions: ActionInfo[] = []
-    let paths = openapi.data.paths
+    let paths = openapi.paths
     for (let [path, request] of Object.entries(paths)) {
         if (path.startsWith(path_prefix)) {
             for (let [method, schema] of Object.entries(request)) {
-                let formSchema: JSONSchema7 = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: openapi.data.components, default: {} }
+                let formSchema: JSONSchema7 = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: openapi.components, default: {} }
                 if (schema.requestBody) {
                     formSchema = schema.requestBody.content['application/json'].schema
-                    formSchema.definitions = openapi.data.components
+                    formSchema.definitions = openapi.components
                 }
-                responseActions.push({ name: schema.summary, args: JSON.parse(JSON.stringify(formSchema).replaceAll('#/components', '#/definitions')), requestType: (method as 'get' | 'post' | 'delete'), endpoint: path })
+                responseActions.push(
+                    { 
+                        name: schema.summary, 
+                        args: JSON.parse(JSON.stringify(formSchema).replaceAll('#/components', '#/definitions')), 
+                        requestType: (method as 'get' | 'post' | 'delete'), 
+                        endpoint: path, 
+                        permissions: schema.permissions, 
+                        response_action: schema.api_response,
+                    }
+                    )
             }
         }
     }
 
     actions[path_prefix] = responseActions
     setActions(actions)
-
+    
     if (actions[path_prefix]) {
         return actions[path_prefix]
     }
@@ -177,6 +182,41 @@ export function useActions(api: AxiosInstance, path_prefix: string): ActionInfo[
         return []
     }
 }
+
+export function useAction(p: {path: string, method: 'post' | 'get' | 'delete'}): ActionInfo|undefined{
+    const apiDoc: OpenAPISchema|null = useContext(OpenApiContext)
+    const [action, setAction]: [ActionInfo|null, Dispatch<ActionInfo|null>] = useState(null as ActionInfo|null)
+    if (action != null){
+        return action
+    }
+
+    if (!apiDoc){
+        return
+    }
+    const schema = apiDoc.paths[p.path][p.method]
+    if (!schema){
+        return
+    }
+
+    let formSchema: JSONSchema7 = { title: schema.summary, type: 'object', required: [], properties: {}, definitions: apiDoc.components, default: {} }
+    if (schema.requestBody) {
+        formSchema = schema.requestBody.content['application/json'].schema
+        formSchema.definitions = apiDoc.components
+    }
+    const calculatedAction = { 
+        name: schema.summary, 
+        args: JSON.parse(JSON.stringify(formSchema).replaceAll('#/components', '#/definitions')), 
+        requestType: p.method, 
+        endpoint: p.path, 
+        permissions: schema.permissions, 
+        response_action: schema.api_response,
+    }
+    setAction(calculatedAction)
+
+    return calculatedAction
+
+}
+
 
 interface Options{
     label: string
@@ -195,13 +235,13 @@ function FetcherField(props: WidgetProps){
         return <TextField onChange={(event)=>(props.onChange(event.target.value))} value={props.value} label={props.label}/>
     }
     
-    if (options2.length == 0){
+    if (options2.length === 0){
         api.get(schema.fetch_url as string).then((event)=>{
             let newOptions: Options[] = []
             for (let response of event.data){
                 newOptions.push({
-                    const: jp.query(response, `$.${schema.fetch_key_path}`)[0], 
-                    label: jp.query(response, `$.${schema.fetch_display_path}`)[0],
+                    const: jp.query(response, `$.${schema.fetch_key_path}`).join(' '), 
+                    label: jp.query(response, `$.${schema.fetch_display_path}`).join(' '),
                 })
             }
 
@@ -212,13 +252,35 @@ function FetcherField(props: WidgetProps){
 }
 
 
+function isUserAllowed(user: User|null, action: ActionInfo): boolean{
+    if (user === null){
+        return false
+    }
+
+    const isAdmin = user.permissions.includes('admin')
+    if (isAdmin){
+        return true
+    }
+
+    if (!action.permissions){
+        return true
+    }
+
+    if (action.permissions.every((v)=>(user.permissions.includes(v)))){
+        return true
+    }
+
+    return false
+}
+
+
 export function ActionItem(p: { action: ActionInfo, identifierSubstring?: string, sx?: ButtonOwnProps, variant?: any, onClick?: Function }) {
     const actionIdentifier: string = useContext(actionIdentifierContext)
     const identifierSubstring = (typeof p.identifierSubstring !== 'undefined') ? p.identifierSubstring : ''
+    const user = useContext(UserInfoContext)
 
     const [form, setForm] = useState(false);
     const [formData, setFormData]: [RJSFSchema, Dispatch<RJSFSchema>] = useState({})
-
 
 
     function handleSubmit() {
@@ -250,7 +312,7 @@ export function ActionItem(p: { action: ActionInfo, identifierSubstring?: string
     }
 
     return (<>
-        <Button variant={p.variant} onClick={() => { if (p.onClick) { p.onClick() } setForm(true) }} sx={p.sx}>{p.action.name}</Button >
+        <Button variant={p.variant} disabled={!isUserAllowed(user, p.action)} onClick={() => { if (p.onClick) { p.onClick() } setForm(true) }} sx={p.sx}>{p.action.name}</Button >
         <Modal
             onClose={() => { setForm(false); setFormData({}); }}
             open={form}
@@ -267,11 +329,11 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef<HTMLDivElement>(null);
     const [selectedIndex, setSelectedIndex] = React.useState(0);
+    const user = useContext(UserInfoContext)
     
     for (let child in React.Children.toArray(p.children)){
         actionItems.push(child)
     }
-    console.log(actionItems)
 
     const handleMenuItemClick = (
         event: React.MouseEvent<HTMLLIElement, MouseEvent>,
@@ -336,6 +398,7 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
                           key={option.props.action.name}
                           selected={index === selectedIndex}
                           onClick={(event) => handleMenuItemClick(event, index)}
+                          disabled={!isUserAllowed(user, option.props.action)}
                         >
                           {option.props.action.name}
                         </MenuItem>
@@ -349,7 +412,6 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
         </React.Fragment>
       );
 }
-
 
 
 export function DataTable(props: { headers: string[], children: ReactNode, actionInfo?: ActionInfo, actionHook?: Function }) {
@@ -371,4 +433,39 @@ export function DataTable(props: { headers: string[], children: ReactNode, actio
             <ActionItem variant="contained" action={actionInfo} onClick={actionHook} />
         </Box>)}
     </Box>
+}
+
+
+export const UserInfoContext: Context<User|null> = createContext(null as User|null)
+
+
+export function GlobalUserInfo(props: {children: any}){
+    const [user, setUser]: [User|null, Dispatch<User|null>] = useState(null as User|null)
+    const [apiAuthenticated, _] = useContext(apiAuthenticatedContext)
+
+
+
+    if (user === null && apiAuthenticated){
+        api.get('/users/@me').then((event)=>{setUser(event.data)}).catch(()=>{setUser(null)})
+      }
+
+      return <UserInfoContext.Provider value={user}>
+            {props.children}
+      </UserInfoContext.Provider>
+}
+
+
+export const OpenApiContext: Context<OpenAPISchema|null> = createContext(null as OpenAPISchema|null)
+export function GlobalOpenApi(props: {children: any}){
+    const [openApi, setOpenApi]: [OpenAPISchema|null, Dispatch<OpenAPISchema|null>] = useState(null as OpenAPISchema|null)
+    if (openApi === null){
+        api.get('/openapi.json').then((event)=>{
+            setOpenApi(event.data)
+        }
+        )
+      }
+
+      return <OpenApiContext.Provider value={openApi}>
+            {props.children}
+      </OpenApiContext.Provider>
 }

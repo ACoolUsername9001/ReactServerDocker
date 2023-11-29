@@ -1,7 +1,7 @@
 import { Box, Paper, ThemeProvider, List, ListItem, ListItemButton, ListItemText, SwipeableDrawer, ListItemIcon, IconButton, AppBar, Toolbar, PaletteMode, createTheme, useMediaQuery, useTheme } from "@mui/material";
-import React, { Dispatch, ReactNode } from "react";
+import React, { Dispatch, ReactNode, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ApiWrapper, getDesignTokens } from "./common";
+import { ApiWrapper, getDesignTokens, GlobalOpenApi, GlobalUserInfo } from "./common";
 import { LoginPage } from "./login";
 import ServersBoard from "./servers";
 import MenuIcon from '@mui/icons-material/Menu';
@@ -113,8 +113,6 @@ export default function App() {
     [],
   );
 
-
-
   const theme = React.useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
 
   return (
@@ -123,16 +121,20 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <BrowserRouter>
           <ApiWrapper>
-            <Menu setMode={setMode}>
-              <Routes>
-                <Route path='login' element={<LoginPage />} />
-                <Route path='signup' element={<SignupPage />} />
-                <Route path='servers' element={<ServersBoard />} />
-                <Route path='users' element={<UsersPage />} />
-                <Route path='browsers' element={<BrowsersPage />} />
-                <Route index element={<Navigate to='/servers' />} />
-              </Routes>
-            </Menu>
+          <GlobalOpenApi>
+            <GlobalUserInfo>
+                <Menu setMode={setMode}>
+                  <Routes>
+                    <Route path='login' element={<LoginPage />} />
+                    <Route path='signup' element={<SignupPage />} />
+                    <Route path='servers' element={<ServersBoard />} />
+                    <Route path='users' element={<UsersPage />} />
+                    <Route path='browsers' element={<BrowsersPage />} />
+                    <Route index element={<Navigate to='/servers' />} />
+                  </Routes>
+                </Menu>
+              </GlobalUserInfo>
+          </GlobalOpenApi>
           </ApiWrapper>
         </BrowserRouter>
       </ThemeProvider>

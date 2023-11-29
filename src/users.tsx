@@ -1,7 +1,7 @@
 import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Paper, TableBody, Chip, Modal, Box } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect, Context, createContext } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, useApiDoc, api, ActionInfo, useActions, ActionGroup, actionIdentifierContext, ActionItem, DataTable } from "./common"
+import { apiAuthenticatedContext, useApiDoc, api, ActionInfo, useActions, ActionGroup, actionIdentifierContext, ActionItem, DataTable, useAction } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { User } from './interfaces'
 
@@ -26,7 +26,7 @@ export function UsersPage({ }) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [users, setUsers]: [User[], Dispatch<User[]>] = useState([] as User[])
 
-    const schema = useApiDoc(api, '/users', 'post')
+    const action: ActionInfo|undefined = useAction({path: '/users', method: 'post'})
 
     useEffect(() => {
         if (!apiAuthenticated) {
@@ -36,10 +36,10 @@ export function UsersPage({ }) {
             (error) => {
                 console.log('Failed to get servers: ' + error);
                 if (error.response) {
-                    if (error.response.status == 401) {
+                    if (error.response.status === 401) {
                         setApiAuthenticated(false)
                     }
-                    else if (error.response.status == 403) {
+                    else if (error.response.status === 403) {
                         setApiAuthenticated(false)
                     }
                 }
@@ -51,10 +51,10 @@ export function UsersPage({ }) {
                 (error) => {
                     console.log('Failed to get users: ' + error);
                     if (error.response) {
-                        if (error.response.status == 401) {
+                        if (error.response.status === 401) {
                             setApiAuthenticated(false)
                         }
-                        else if (error.response.status == 403) {
+                        else if (error.response.status === 403) {
                             setApiAuthenticated(false)
                         }
                     }
@@ -72,7 +72,7 @@ export function UsersPage({ }) {
         userComponents.push(<actionIdentifierContext.Provider value={user.username}><UserItem user={user} /></actionIdentifierContext.Provider>)
     }
 
-    return <DataTable headers={['Username', 'Email', 'Permissions', 'Actions']} actionInfo={{ name: 'Invite User', args: schema, endpoint: '/users', requestType: 'post' }}>
+    return <DataTable headers={['Username', 'Email', 'Permissions', 'Actions']} actionInfo={action}>
         <UserActionsContext.Provider value={useActions(api, '/users/{username}')}>
             {userComponents}
         </UserActionsContext.Provider>

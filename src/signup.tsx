@@ -23,7 +23,7 @@ export function SignupPage(props: {}) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [searchParam, setSearchParam] = useSearchParams();
     const token = searchParam.get('token');
-    if (token == null){
+    if (token === null){
         return <Navigate to='/' />
     }
 
@@ -36,7 +36,7 @@ export function SignupPage(props: {}) {
         const data = new FormData(event.currentTarget);
         const usernameFormData: FormDataEntryValue | null = data.get('username');
         const passwordFormData: FormDataEntryValue | null = data.get('password');
-        if (usernameFormData == null || passwordFormData == null){
+        if (usernameFormData === null || passwordFormData === null){
             return
         }
         const username: string = usernameFormData.toString();

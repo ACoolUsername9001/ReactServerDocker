@@ -45,12 +45,12 @@ export interface Browser {
 export interface OpenApiMethodSchema {
     summary: string
     requestBody: {content: Record<string, {schema: JSONSchema7}>}
+    api_response: 'Ignore' | 'Browse'
+    permissions: string[]
 }
 
 
 export interface OpenAPISchema {
-    data: {
-        paths: Record<string, {get?: OpenApiMethodSchema, post?: OpenApiMethodSchema, delete?: OpenApiMethodSchema}>
-        components: {schema: Record<string, JSONSchema7>}
-    }
+    paths: Record<string, {get?: OpenApiMethodSchema, post?: OpenApiMethodSchema, delete?: OpenApiMethodSchema}>
+    components: {schema: Record<string, JSONSchema7>}
 }

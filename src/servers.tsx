@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios"
-import { ActionGroup, ActionInfo, DataTable, actionIdentifierContext, api, apiAuthenticatedContext, useActions } from "./common"
+import { ActionGroup, ActionInfo, DataTable, UserInfoContext, actionIdentifierContext, api, apiAuthenticatedContext, useAction, useActions } from "./common"
 import React, { Context, Dispatch, createContext, useContext, useEffect, useState } from "react"
 import { TableRow, TableCell, Chip } from "@mui/material"
 import { ImageInfo, ServerInfo } from "./interfaces"
@@ -20,24 +20,44 @@ const serverActionsContext: Context<ActionInfo[]> = createContext([] as ActionIn
 
 function ServerItem(props: { server_info: ServerInfo }) {
     const actions = useContext(serverActionsContext)
+    const [serverPermissions, setServerPermissions] = useState(null as null|string[])
+    const user = useContext(UserInfoContext)
+    let permissions: string[] = []
+
+    if (props.server_info.user_id === user?.username){
+        permissions.push('admin')
+    }else{
+        if (serverPermissions === null){
+            api.get(`/servers/${props.server_info.id_}/permissions`).then((event)=>{setServerPermissions(event.data)})
+        }else{
+            serverPermissions.every((v)=>{permissions.push(v)})
+        }
+        if (user){
+            user.permissions.every((v)=>{permissions.push(v)})
+        }
+    }
+
+
     const name = `${props.server_info.user_id}'s ${props.server_info.image.name} ${props.server_info.image.version} Server`
     if (props.server_info.ports === null) {
         props.server_info.ports = []
     }
     return (
-        <actionIdentifierContext.Provider value={props.server_info.id_}>
-            <TableRow>
-                <TableCell>{props.server_info.nickname}</TableCell>
-                <TableCell>{props.server_info.user_id}</TableCell>
-                <TableCell>{props.server_info.image.name}</TableCell>
-                <TableCell>{props.server_info.image.version}</TableCell>
-                <TableCell>{props.server_info.domain}</TableCell>
-                <TableCell>{props.server_info.ports.map((port, index, array) => { return <Chip label={`${port.number}/${port.protocol}`} /> })}</TableCell>
-                <TableCell>
-                    <ActionGroup actions={actions} identifierSubstring="server_id" />
-                </TableCell>
-            </TableRow>
-        </actionIdentifierContext.Provider>
+        <UserInfoContext.Provider value={user? {username: user.username, email: user.email, permissions: permissions}: null}>
+            <actionIdentifierContext.Provider value={props.server_info.id_}>
+                <TableRow>
+                    <TableCell>{props.server_info.nickname}</TableCell>
+                    <TableCell>{props.server_info.user_id}</TableCell>
+                    <TableCell>{props.server_info.image.name}</TableCell>
+                    <TableCell>{props.server_info.image.version}</TableCell>
+                    <TableCell>{props.server_info.domain}</TableCell>
+                    <TableCell>{props.server_info.ports.map((port, index, array) => { return <Chip label={`${port.number}/${port.protocol}`} /> })}</TableCell>
+                    <TableCell>
+                        <ActionGroup actions={actions} identifierSubstring="server_id" />
+                    </TableCell>
+                </TableRow>
+            </actionIdentifierContext.Provider>
+        </UserInfoContext.Provider>
     )
 }
 
@@ -76,10 +96,10 @@ export default function ServersBoard() {
                 (error) => {
                     console.log('Failed to get servers: ' + error);
                     if (error.response) {
-                        if (error.response.status == 401) {
+                        if (error.response.status === 401) {
                             setApiAuthenticated(false)
                         }
-                        else if (error.response.status == 403) {
+                        else if (error.response.status === 403) {
                             setApiAuthenticated(false)
                         }
                     }
@@ -100,17 +120,17 @@ export default function ServersBoard() {
 
 
     return (
-        <DataTable headers={['Nickname', 'Owner', 'Server', 'Version', 'Domain', 'Ports', 'Actions']} actionInfo={{ name: 'Create Server', args: schema, endpoint: '/servers', requestType: 'post' }} actionHook={() => {
+        <DataTable headers={['Nickname', 'Owner', 'Server', 'Version', 'Domain', 'Ports', 'Actions']} actionInfo={useAction({path: '/servers', method: 'post'})} actionHook={() => {
             api.get('/images').then((value) => {
                 setImages(value.data)
             }).catch(
                 (error) => {
                     console.log('Failed to get images: ' + error);
                     if (error.response) {
-                        if (error.response.status == 401) {
+                        if (error.response.status === 401) {
                             setApiAuthenticated(false)
                         }
-                        else if (error.response.status == 403) {
+                        else if (error.response.status === 403) {
                             setApiAuthenticated(false)
                         }
                     }

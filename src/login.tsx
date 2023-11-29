@@ -31,7 +31,7 @@ export function LoginPage(props: {}) {
         const data = new FormData(event.currentTarget);
         const usernameFormData: FormDataEntryValue | null = data.get('username');
         const passwordFormData: FormDataEntryValue | null = data.get('password');
-        if (usernameFormData == null || passwordFormData == null){
+        if (usernameFormData === null || passwordFormData === null){
             return
         }
         const username: string = usernameFormData.toString();
