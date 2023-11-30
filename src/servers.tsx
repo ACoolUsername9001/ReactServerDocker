@@ -30,10 +30,10 @@ function ServerItem(props: { server_info: ServerInfo }) {
         if (serverPermissions === null){
             api.get(`/servers/${props.server_info.id_}/permissions`).then((event)=>{setServerPermissions(event.data)})
         }else{
-            serverPermissions.every((v)=>{permissions.push(v)})
+            permissions.push(...serverPermissions)
         }
         if (user){
-            user.permissions.every((v)=>{permissions.push(v)})
+            permissions.push(...user.permissions)
         }
     }
 
