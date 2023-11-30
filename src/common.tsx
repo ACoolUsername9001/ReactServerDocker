@@ -420,8 +420,8 @@ export function DataTable(props: { headers: string[], children: ReactNode, actio
         <TableContainer component={Paper} sx={{maxHeight: '80svh'}}>
             <Table stickyHeader>
                 <TableHead>
-                    <TableRow sx={{ backgroundColor: 'background.light' }}>
-                        {headers.map((value, index, array) => (<TableCell sx={{ backgroundColor: 'background.light' }}>{value}</TableCell>))}
+                    <TableRow sx={{ backgroundColor: 'background.light', fontWeight: 'bold' }}>
+                        {headers.map((value, index, array) => (<TableCell sx={{ backgroundColor: 'background.light', fontWeight: 'bold' , fontSize: 'medium'}}>{value}</TableCell>))}
                     </TableRow>
                 </TableHead>
                 <TableBody>

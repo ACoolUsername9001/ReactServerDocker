@@ -40,11 +40,8 @@ export function LoginPage(props: {}) {
         fetchToken(username, password, Boolean(data.get('remember'))).then(
             (token) => {
                 api.defaults.headers.common.Authorization = `Bearer ${token}`;
-
-                ;
                 Cookies.set('token', token)
                 setApiAuthenticated(true)
-
             },
             (error) => {
                 return Promise.reject(error);
