@@ -1,73 +1,33 @@
 import { TableRow, TableCell, TableContainer, TableHead, Table, Button, Popover, Paper, TableBody, Chip, Link, ButtonGroup, Modal, Box } from "@mui/material"
 import React, { useContext, Dispatch, useState, useEffect, createContext, Context } from "react"
 import Form from "@rjsf/mui"
-import { apiAuthenticatedContext, useApiDoc, api, ActionItem, formModalStyle, DataTable } from "./common"
+import { apiAuthenticatedContext, useApiDoc, api, ActionItem, formModalStyle, DataTable, useActions, ActionInfo, ActionGroup, actionIdentifierContext } from "./common"
 import validator from '@rjsf/validator-ajv8';
 import { Browser, ServerInfo } from "./interfaces";
 import { loadServers } from "./servers";
 import { JSONSchema7TypeName } from "json-schema";
 
 const browserContext: Context<Browser> = createContext({} as Browser)
+const browserActionContext: Context<ActionInfo[]|null> = createContext(null as ActionInfo[]|null)
+
+function FakeAction(props: {action: ActionInfo, browser: Browser}){
+    return  <Button rel="noopener noreferrer" target="_blank" href={`https://${props.browser.url}`}>{props.action.name}</Button>
+}
 
 function BrowserActions() {
+    const actions = useContext(browserActionContext)
     const browser = useContext(browserContext)
-    const [form, setForm] = useState(false);
-    let schema = {
-        "properties": {
-
-        },
-        "type": ("object" as JSONSchema7TypeName),
-        "required": [],
-        "title": "Stop Browser"
-    }
-
-    function handleSubmit() {
-        let url = `browsers`
-        api.delete(url, { data: { server_id: browser.connected_to.id_ } })
-
-        setForm(false)
-    }
-    return (<>
-        <ButtonGroup variant="outlined">
-            <Button rel="noopener noreferrer" target="_blank" href={`https://${browser.url}`}>Browse</Button>
-            <Button onClick={() => {
-                setForm(true);
-
-            }}>Stop Browsing</Button>
-        </ButtonGroup>
-        <Modal
-            onClose={() => { setForm(false); }}
-            open={form}
-
-        >
-            <Box sx={formModalStyle}>
-                <Form validator={validator} schema={schema} onSubmit={handleSubmit} />
-            </Box>
-        </Modal>
-    </>
-    )
+    return <actionIdentifierContext.Provider value={browser.id_}>
+        <ActionGroup actions={actions? actions:[]} identifierSubstring="browser_id">
+            <FakeAction action={{name: 'Browse', requestType: 'post', endpoint: '', args:{}}} browser={browser}/>
+        </ActionGroup>
+    </actionIdentifierContext.Provider>
 }
 
 export function BrowsersPage({ }) {
     const [apiAuthenticated, setApiAuthenticated] = useContext(apiAuthenticatedContext)
     const [browsers, setBrowsers]: [Browser[], Dispatch<Browser[]>] = useState([]as Browser[])
-    const [servers, setServers]: [ServerInfo[], Dispatch<ServerInfo[]>] = useState([] as ServerInfo[])
-
-    let schema = {
-        "properties": {
-            "server_id": {
-                "type": "string",
-                "oneOf": servers.map((value, index, array) => { return { "const": value.id_, "title": `${value.user_id}\`s ${value.image.name} ${value.image.version}` } }),
-                "title": "Server ID"
-            }
-        },
-        "type": "object",
-        "required": [
-            "server_id"
-        ],
-        "title": "Create Browser"
-    }
-
+    
 
     useEffect(() => {
         if (!apiAuthenticated) {
@@ -106,25 +66,27 @@ export function BrowsersPage({ }) {
         );
         return () => { clearInterval(interval) }
     }, [apiAuthenticated])
-
+    
     let browserComponents = []
 
     for (let browser of browsers) {
         browserComponents.push(
             <browserContext.Provider value={browser}>
-                <TableRow>
-                    <TableCell>{browser.owner_id}</TableCell>
-                    <TableCell>{browser.connected_to.user_id}</TableCell>
-                    <TableCell>{browser.connected_to.image.name}</TableCell>
-                    <TableCell>{browser.connected_to.image.version}</TableCell>
-                    <TableCell>
-                        <BrowserActions />
-                    </TableCell>
-                </TableRow>
+                    <TableRow>
+                        <TableCell>{browser.owner_id}</TableCell>
+                        <TableCell>{browser.connected_to.user_id}</TableCell>
+                        <TableCell>{browser.connected_to.image.name}</TableCell>
+                        <TableCell>{browser.connected_to.image.version}</TableCell>
+                        <TableCell>
+                            <BrowserActions/>
+                        </TableCell>
+                    </TableRow>
             </browserContext.Provider>
         )
     }
-    return <DataTable headers={['Browser Owner', 'Server Owner', 'Server Game', 'Game Version', 'Actions']} actionInfo={{ name: 'Create Browser', args: schema, endpoint: '/browsers', requestType: 'post', }} actionHook={() => { loadServers(api).then(({ status, data }) => setServers(data)).catch((reason) => console.log("Failed to load servers" + reason)) }}>
-        {browserComponents}
+    return <DataTable headers={['Browser Owner', 'Server Owner', 'Server Game', 'Game Version', 'Actions']}>
+        <browserActionContext.Provider value={useActions(api, '/browsers/{browser_id}')}>
+            {browserComponents}
+        </browserActionContext.Provider>
     </DataTable>
 }

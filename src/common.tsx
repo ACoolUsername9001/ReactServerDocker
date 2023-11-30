@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
 import React, { Context, Dispatch, ReactNode, createContext, useContext, useMemo, useState } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import Cookies from 'js-cookie'
@@ -285,22 +285,32 @@ export function ActionItem(p: { action: ActionInfo, identifierSubstring?: string
 
     function handleSubmit() {
         let url = p.action.endpoint.replaceAll(`{${identifierSubstring}}`, actionIdentifier)
-
+        let promise: Promise<AxiosResponse<any, any>>|null = null
         switch (p.action.requestType) {
             case 'post': {
-                api.post(url, formData)
+                promise = api.post(url, formData)
                 break
             }
             case 'get': {
-                api.post(url, formData)
+                if (formData){
+                    console.warn('get can get no arguments, dropping')
+                }
+                promise = api.get(url)
                 break
             }
             case 'delete': {
                 if (formData){
                     console.warn('delete can get no arguments, dropping')
                 }
-                api.delete(url)
+                promise = api.delete(url)
                 break
+            }
+        }
+        switch (p.action.response_action){
+            case 'Browse':{
+                if (promise !== null){
+                    promise.then((event)=>{window.open(`https://${event.data}`)})
+                }
             }
         }
         setForm(false)
@@ -331,7 +341,7 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
     const [selectedIndex, setSelectedIndex] = React.useState(0);
     const user = useContext(UserInfoContext)
     
-    for (let child in React.Children.toArray(p.children)){
+    for (let child of React.Children.toArray(p.children)){
         actionItems.push(child)
     }
 
@@ -393,8 +403,11 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
                 <Paper>
                   <ClickAwayListener onClickAway={handleClose}>
                     <MenuList id="split-button-menu" autoFocusItem>
-                      {actionItems.map((option, index) => (
-                        <MenuItem
+                      {actionItems.map((option, index) => {
+                        if (!option.props){
+                            console.log(actionItems)
+                        }
+                        return <MenuItem
                           key={option.props.action.name}
                           selected={index === selectedIndex}
                           onClick={(event) => handleMenuItemClick(event, index)}
@@ -402,7 +415,9 @@ export function ActionGroup(p: { actions: ActionInfo[], identifierSubstring?: st
                         >
                           {option.props.action.name}
                         </MenuItem>
-                      ))}
+                        }
+                        )
+                        }
                     </MenuList>
                   </ClickAwayListener>
                 </Paper>
