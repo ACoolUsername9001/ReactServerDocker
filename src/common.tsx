@@ -421,7 +421,7 @@ export function DataTable(props: { headers: string[], children: ReactNode, actio
             <Table stickyHeader>
                 <TableHead>
                     <TableRow sx={{ backgroundColor: 'background.light', fontWeight: 'bold' }}>
-                        {headers.map((value, index, array) => (<TableCell sx={{ backgroundColor: 'background.light', fontWeight: 'bold' , fontSize: 'medium'}}>{value}</TableCell>))}
+                        {headers.map((value, index, array) => (<TableCell sx={{ backgroundColor: 'background.light', fontWeight: 'bold' }}>{value}</TableCell>))}
                     </TableRow>
                 </TableHead>
                 <TableBody>
